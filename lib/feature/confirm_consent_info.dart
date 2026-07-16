@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:futureme/core/constants/assets.dart';
 import 'package:futureme/core/constants/text.dart';
-import 'package:futureme/feature/email_consent.dart';
+import 'package:futureme/feature/authentication/login.dart';
 
 
-class ConsentInfo extends StatefulWidget{
-  const ConsentInfo({super.key});
+class ConfirmConsent extends StatefulWidget{
+  const ConfirmConsent({super.key});
 
   @override
-  State<ConsentInfo> createState() => ConsentInfoState();
+  State<ConfirmConsent> createState() => ConfirmConsentState();
 }
 
-class ConsentInfoState extends State<ConsentInfo>{
+class ConfirmConsentState extends State<ConfirmConsent>{
 
    
     void goToNextPage(Widget nextPage){
@@ -36,19 +36,17 @@ class ConsentInfoState extends State<ConsentInfo>{
               SizedBox(height:50),
                 Image.asset(AssetData.sunnyDay),
                 SizedBox(height:30),
-              TextData.pageName(content: "Avem nevoie de acordul unui părinte"),
+              TextData.pageName(content: "Acordul a fost \n confirmat"),
               SizedBox(height:20),
-              TextData.centerText(content: "Pentru vârsta ta, este nevoie ca un părinte sau tutore legal să își dea acordul înainte să continui evaluarea."),
+              TextData.centerText(content: "Mulțumim! Acum poți continua experiența FutureMe."),
               SizedBox(height:20),  
               AssetData.divider(),
               SizedBox(height:20),
-              TextData.centerText(content: "După acest pas, vei putea merge mai departe în ritmul tău."),
-              SizedBox(height: 70,),
-              TextData.customButton(content: "Continuă cu acordul", onpressed: (){    
-                goToNextPage(EmailConsent());         
+              TextData.centerText(content: "Răspunsurile tale sunt în siguranță. Le folosim pentru a personaliza pașii, interpretările și raportul tău final. Poți merge mai departe în ritmul tău."),
+              SizedBox(height: 180,),
+              TextData.customButton(content: "Continuă ", onpressed: (){    
+                goToNextPage(LoginPage());         
               }),
-              SizedBox(height: 20,),
-               TextData.tagText("Revin mai târziu")
             ]
           )
 

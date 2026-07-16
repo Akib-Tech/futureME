@@ -41,9 +41,9 @@ class AgeSetState extends State<AgeSet>{
             children:[
               AssetData.customAppBar(context),
                SizedBox(height:30),
-              TextData.pageName("Pentru o experiență potrivită"),
+              TextData.pageName(content:"Pentru o experiență potrivită"),
               SizedBox(height:20),
-              TextData.centerText("FutureMe este creat pentru tineri începând cu vârsta de 14 ani. Alege intervalul tău de vârstă, ca să adaptăm pașii următori."),
+              TextData.centerText(content: "FutureMe este creat pentru tineri începând cu vârsta de 14 ani. Alege intervalul tău de vârstă, ca să adaptăm pașii următori."),
               SizedBox(height:20),  
               RadioGroup(
                 groupValue: selectedAge,

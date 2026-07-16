@@ -24,11 +24,11 @@ class OnboardingScreen extends StatelessWidget{
             SizedBox(
               height:20
             ),
-            TextData.pageName("Aici ești \nîn siguranță"),  
+            TextData.pageName(content:"Aici ești \nîn siguranță"),  
              SizedBox(
               height:20
             ),
-              TextData.centerText("FutureMe te ghidează pas cu pas să te înțelegi mai bine și să îți clarifici direcția, fără presiune și fără răspunsuri perfecte.",),
+              TextData.centerText(content: "FutureMe te ghidează pas cu pas să te înțelegi mai bine și să îți clarifici direcția, fără presiune și fără răspunsuri perfecte.",),
               SizedBox(
               height:20
             ),

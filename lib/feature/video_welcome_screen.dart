@@ -41,23 +41,37 @@ SizedBox(height: 20),
           Container(
             padding:EdgeInsets.symmetric(horizontal: 20,vertical: 0),
             child: Column(children: [
-                          TextData.pageName("Înainte să începem"),
+                          TextData.pageName(content: "Înainte să începem"),
              SizedBox(height: 20),
-          TextData.centerText("Am pregătit un mesaj scurt pentru tine,\n ca să știi cum vom merge mai departe:\n pas cu pas, fără presiune."),
+          TextData.centerText(content: "Am pregătit un mesaj scurt pentru tine,\n ca să știi cum vom merge mai departe:\n pas cu pas, fără presiune."),
             SizedBox(height: 20),
           TextData.roundedContainer([
             VideoApp(),
             SizedBox(
               height: 10,
             ),
-           SizedBox(child: Text("Mesaj de bun venit",
-            textAlign: TextAlign.right,)),
-          SizedBox(height: 50),
+            TextData.leftBoldText(content: "Mesaj de bun venit"),
+            SizedBox(
+            child:  Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Icon(Icons.timelapse_rounded,
+                color: Color(0xFF6D5D78),
+                ),
+                Expanded(
+                  child:TextData.leftLightText(content: "1 Min"),
+                )
+                
+              ],
+            ),
+            ),
+          
+           
+            ],),
+            SizedBox(height: 100),
            TextData.customButton(content:"Continuation",onpressed: (){ 
             Navigator.push(context,MaterialPageRoute(builder: (context) => AgeSet() ));
             }),
-           
-            ],),
          ] )
           )
     ],)
