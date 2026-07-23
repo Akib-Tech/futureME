@@ -48,7 +48,7 @@ class ConsentInfoState extends State<ConsentInfo>{
                 goToNextPage(EmailConsent());         
               }),
               SizedBox(height: 20,),
-               TextData.tagText("Revin mai târziu")
+               TextData.tagText(content: "Revin mai târziu")
             ]
           )
 

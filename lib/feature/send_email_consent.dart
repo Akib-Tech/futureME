@@ -45,7 +45,7 @@ class SendEmailConsentState extends State<SendEmailConsent>{
                 goToNextPage(ConfirmConsent());       
               }),
               SizedBox(height: 5,),
-               TextData.tagText("Schimbă adresa de email")
+               TextData.tagText(content: "Schimbă adresa de email")
             ]
           )
 

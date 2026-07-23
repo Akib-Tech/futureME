@@ -45,7 +45,7 @@ SizedBox(height: 20),
              SizedBox(height: 20),
           TextData.centerText(content: "Am pregătit un mesaj scurt pentru tine,\n ca să știi cum vom merge mai departe:\n pas cu pas, fără presiune."),
             SizedBox(height: 20),
-          TextData.roundedContainer([
+          TextData.roundedContainer(contents: [
             VideoApp(),
             SizedBox(
               height: 10,

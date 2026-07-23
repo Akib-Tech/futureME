@@ -1,10 +1,6 @@
-import 'package:dio/dio.dart';
-import 'package:logger/logger.dart';
-import 'package:network_inspector/common/utils/dio_interceptor.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:futureme/core/di/injectable_init.dart';
-import 'package:network_inspector/network_inspector.dart';
 import './splashscreen/splash_screen.dart';
 
 void main() {

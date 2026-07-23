@@ -40,7 +40,7 @@ Widget build(BuildContext context){
              SizedBox(height: 20),
           TextData.centerText(content: "Înainte să mergem mai departe, ți-am pregătit un mesaj care să îți arate ce urmează și să te ajute să pornești cu mai multă încredere."),
             SizedBox(height: 20),
-          TextData.roundedContainer([
+          TextData.roundedContainer(contents: [
             VideoApp(),
             SizedBox(
               height: 10,

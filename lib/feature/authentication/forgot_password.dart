@@ -41,7 +41,7 @@ class ForgotPasswordState extends State<ForgotPassword>{
               SizedBox(height:20),  
                TextData.leftBoldText(content: "Prenume"),
                SizedBox(height:10), 
-               TextData.roundedContainer([
+               TextData.roundedContainer(contents: [
                 AssetData.textForm(),
               ]),
               SizedBox(height:10), 

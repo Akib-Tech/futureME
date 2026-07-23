@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:futureme/core/constants/assets.dart';
 import 'package:futureme/core/constants/text.dart';
+import 'package:futureme/feature/starterInfo/failed_payment.dart';
 
 class SuccessPayment extends StatefulWidget{
     const SuccessPayment({super.key});
@@ -33,14 +34,15 @@ Widget build(BuildContext context){
                SizedBox(height:30),
           Container(
             padding:EdgeInsets.symmetric(horizontal: 20,vertical: 0),
-            child: Column(children: [
+            child: Column(
+              children: [
                Image.asset(AssetData.sunnyDay),
                           TextData.pageName(content: "Abonamentul tău este activ"),
              SizedBox(height: 20),
           TextData.centerText(content: "Totul este pregătit. Poți începe experiența FutureMe și parcurge pașii în ritmul tău."),
-           SizedBox(height: 180,),
+           SizedBox(height: 350,),
               TextData.customButton(content: "Continuă ", onpressed: (){    
-                goToNextPage(SuccessPayment());         
+                goToNextPage(FailedPayment());         
               }),
          ] )
           )

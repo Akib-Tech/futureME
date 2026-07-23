@@ -41,13 +41,13 @@ class LoginPageState extends State<LoginPage>{
               SizedBox(height:20),  
                TextData.leftBoldText(content: "Email"),
                SizedBox(height:10), 
-              TextData.roundedContainer([
+              TextData.roundedContainer(contents: [
                 AssetData.textForm(),
               ]),
               SizedBox(height:20),  
                TextData.leftBoldText(content: "Parolă"),
                SizedBox(height:10), 
-              TextData.roundedContainer([
+              TextData.roundedContainer(contents: [
                 AssetData.textForm(),
               ]),
 
@@ -58,42 +58,57 @@ class LoginPageState extends State<LoginPage>{
                SizedBox(height: 20,),
                AssetData.divider(),
                 SizedBox(height: 20,),
-              TextData.roundedContainer([
+              TextData.roundedContainer(
+
+                contentPadding: EdgeInsets.symmetric(horizontal: 90,vertical: 15),
+                contents: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                   Image.asset(AssetData.googleIcon),
-                   SizedBox(width: 10,),
-                  TextData.linkText(content: "Continuă cu Google")
-                  
+                   SizedBox(width: 6,),
+                  Expanded(child: TextData.linkText(content: "Continuă cu Google")
+                  ,)
                 ],)
               ]),
               SizedBox(
                 height: 20,
               ),
-               TextData.roundedContainer([
+               TextData.roundedContainer(
+                 contentPadding: EdgeInsets.symmetric(horizontal: 90,vertical: 15),
+                
+                contents: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                   Image.asset(AssetData.appleIcon),
-                  SizedBox(width: 10,),
-                  TextData.linkText(content: "Continuă cu Google")
+                  SizedBox(width: 6,),
+                  Expanded(
+                  child:TextData.linkText(
+                    content: "Continuă cu Google",
+                   )
+                  )
                 
                 ],)
               ]),
               SizedBox(
                 height: 20,
               ),
-              Row(
+              
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 70),
+                child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                Text("Ai deja cont? "),
+                Text( "Ai deja cont? "),
                 SizedBox(
                 width: 5,
               ),
-                Text("Conectează-te"),
-                
-              ],)
+               Expanded(
+               child: TextData.linkText(content: "Conectează-te")
+                ,)
+              ],),
+              )
 
             ]
           )

@@ -57,7 +57,7 @@ class AgeSetState extends State<AgeSet>{
                 child: Column(
                   children:[
               TextData.roundedContainer(
-                [
+               contents:  [
                     RadioListTile<AgeBracket>(
                       title: TextData.generalText( "Sub 14 ani",),
                       activeColor: Color(TextData.uiHeadingColor),
@@ -69,7 +69,7 @@ class AgeSetState extends State<AgeSet>{
               ),
                SizedBox(height:20),  
               TextData.roundedContainer(
-                [
+                contents: [
                    RadioListTile<AgeBracket>(
                       title: TextData.generalText( "14-15 ani",),
                       activeColor: Color(TextData.uiHeadingColor),
@@ -81,7 +81,7 @@ class AgeSetState extends State<AgeSet>{
               ),
                SizedBox(height:20),  
               TextData.roundedContainer(
-                [
+               contents:  [
                   RadioListTile<AgeBracket>(
                       title: TextData.generalText( "16-17 ani",),
                       activeColor: Color(TextData.uiHeadingColor),
@@ -93,7 +93,7 @@ class AgeSetState extends State<AgeSet>{
               ),
                SizedBox(height:20),  
               TextData.roundedContainer(
-                [
+                contents: [
                   RadioListTile<AgeBracket>(
                       title: TextData.generalText( "+18 ani",),
                       activeColor: Color(TextData.uiHeadingColor),

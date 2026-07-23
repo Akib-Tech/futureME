@@ -8,7 +8,9 @@ class TextData {
   static const uiFontFamilySmall = "R.font.rubik";
   static const grad1= 0xFF2B0B78;
   static const containerColor =0xFF8B7D92;
-
+  static const borderColor = 0xFFE9DCD7;
+  static const faintColor = 0xffFAF1F8;
+  static const dashboardColor = 0xff211431;
 
   static Widget customButton({
      String? content,
@@ -112,15 +114,16 @@ class TextData {
     double? fontSize,
     String? fontFamily,
     FontWeight? fontWeight,
+    TextAlign? textAlign
     }){
     return SizedBox(
     width: width ?? 345,
     child: Text(
         content ?? "",
-                textAlign: TextAlign.left,
+                textAlign:textAlign ?? TextAlign.left,
         style: TextStyle(
             color:  color ?? const Color(uiHeadingColorSmall) /* ui-text-secondary */,
-            fontSize: 16,
+            fontSize: fontSize ?? 16,
             fontFamily: fontFamily ?? uiFontFamilySmall,
             fontWeight: fontWeight ?? FontWeight.w400,
             height: 1.50,
@@ -130,17 +133,22 @@ class TextData {
 );
   }
 
-static Widget linkText({String? content}){
+static Widget linkText({String? content, double? fontSize}){
     return leftLightText(
-      content: content ?? "",
+      
+       fontSize: fontSize ?? 16,
+      fontWeight: FontWeight.bold,
+     content: content ?? "",
        color: Color(uiHeadingColor)
     );
 }
 
-static Widget leftBoldText({String? content}){
+static Widget leftBoldText({String? content, Color? color}){
     return leftLightText(
       content:content,
-     fontWeight: FontWeight.w600);
+     fontWeight: FontWeight.w600,
+     color: color ?? Color(uiHeadingColorSmall)
+    );
 }
 
  static Widget gap({double? width , double? height}){
@@ -150,7 +158,7 @@ static Widget leftBoldText({String? content}){
         );
  }
 
-  static Widget tagText(String content){
+  static Widget tagText({String? content}){
     return Container(
     width: double.infinity,
     padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
@@ -166,7 +174,7 @@ static Widget leftBoldText({String? content}){
         spacing: 8,
         children: [
             Text(
-                 content,
+                 content ?? "",
                 style: TextStyle(
                     color: const Color(0xFF2B0B78) /* ui-action-secondaryText */,
                     fontSize: 16,
@@ -191,18 +199,23 @@ height: 1.38,
 ));
 }
 
-  static Widget roundedContainer(List<Widget>? contents){
+  static Widget roundedContainer({
+    List<Widget>? contents,
+    Color? color,
+    EdgeInsets? contentPadding,
+    BorderRadius? borderRadius,
+    }){
       return Container(
 width: double.infinity,
-padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+padding: contentPadding ?? const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
 decoration: ShapeDecoration(
-color: Colors.white /* ui-surface-card */,
+color: color ?? Colors.white /* ui-surface-card */,
 shape: RoundedRectangleBorder(
 side: BorderSide(
 width: 1,
-color: const Color(0xFFE9DCD7) /* ui-border-default */,
+color: const Color(borderColor) /* ui-border-default */,
 ),
-borderRadius: BorderRadius.circular(14),
+borderRadius: borderRadius ?? BorderRadius.circular(14),
 ),
 shadows: [
 BoxShadow(
@@ -219,14 +232,18 @@ child: Column(children: contents ?? [ Text("")])
   
 }
 
-static Widget checkIconText(String text){
-    
+static Widget checkIconText({
+  IconData? icon,
+  String? text,
+  Color? color
+    }){
         return SizedBox(
             child:  Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Icon(Icons.check_circle_outline_outlined,
-                color: Color(0xFF6D5D78),
+                Icon( 
+                icon ?? Icons.check_circle_outline_outlined,
+                color:color ?? Color(0xFF6D5D78),
                 ),
                 SizedBox(width:5),
                 Expanded(

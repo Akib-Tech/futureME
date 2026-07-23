@@ -39,7 +39,7 @@ class OnboardingScreen extends StatelessWidget{
              ),
              
               SizedBox(height:15,),
-              TextData.tagText("Am deja cont"),
+              TextData.tagText(content: "Am deja cont"),
               SizedBox(height:20)
             
           ],

@@ -10,6 +10,9 @@ class AssetData{
   static const loveIcon = "assets/images/heartIcon.png";
   static const appleIcon = "assets/images/appleIcon.png";
   static const googleIcon = "assets/images/googleIcon.png";
+  static const moduleIcon = "assets/images/moduleIcon.png";
+  
+  
   static Widget videoPlayer (VideoPlayerController controller){
       return Stack(
             children: [
@@ -132,4 +135,31 @@ return TextFormField(
 );
  
  }
+
+static Widget navBar(){
+    return BottomNavigationBar(
+     items: [
+        BottomNavigationBarItem(
+            backgroundColor: Color(TextData.backgroundColor),
+          
+          label: "Home",
+          icon: Icon(Icons.home, color: Colors.red,),
+          ),
+          BottomNavigationBarItem(
+          label: "About",
+          icon: Icon(Icons.home),
+          ),
+          BottomNavigationBarItem(
+          label: "COme",
+          icon: Icon(Icons.home),
+          ),
+          BottomNavigationBarItem(
+          label: "Home",
+          icon: Icon(Icons.home),
+          ),
+      ]
+      );
+}
+
+
   }

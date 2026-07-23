@@ -41,7 +41,7 @@ class EmailConsentState extends State<EmailConsent>{
            
               SizedBox(height: 30,),
               TextData.roundedContainer(
-                [
+                contents: [
                   AssetData.textForm()
                 ]
               ),
@@ -52,7 +52,7 @@ class EmailConsentState extends State<EmailConsent>{
                 goToNextPage(SendEmailConsent());
               }),
               SizedBox(height: 5,),
-               TextData.tagText("Revin mai târziu")
+               TextData.tagText(content: "Revin mai târziu")
             ]
           )
 
