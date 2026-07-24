@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:futureme/core/constants/assets.dart';
-import 'package:futureme/core/constants/text.dart';
+import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/feature/send_email_consent.dart';
+import 'package:futureme/shared/widgets/app_text_field.dart';
+import 'package:futureme/shared/widgets/center_text.dart';
+import 'package:futureme/shared/widgets/custom_app_bar.dart';
+import 'package:futureme/shared/widgets/left_light_text.dart';
+import 'package:futureme/shared/widgets/page_title.dart';
+import 'package:futureme/shared/widgets/primary_button.dart';
+import 'package:futureme/shared/widgets/rounded_card.dart';
+import 'package:futureme/shared/widgets/tag_button.dart';
 
 class EmailConsent extends StatefulWidget{
   const EmailConsent({super.key});
@@ -12,7 +20,7 @@ class EmailConsent extends StatefulWidget{
 
 class EmailConsentState extends State<EmailConsent>{
 
-   
+
     void goToNextPage(Widget nextPage){
       Navigator.push(context,MaterialPageRoute(builder: (context) => nextPage ));
     }
@@ -25,34 +33,34 @@ class EmailConsentState extends State<EmailConsent>{
     @override
     Widget build(BuildContext context){
         return Scaffold(
-          backgroundColor : Color(TextData.backgroundColor),
+          backgroundColor : AppColors.background,
           body: Container(
             padding: EdgeInsets.all(20),
             child:  Column(
             children:[
-            
-              AssetData.customAppBar(context),
+
+              CustomAppBar(context),
               SizedBox(height:20),
-                Image.asset(AssetData.sunnyDay),
+                Image.asset(AppAssets.sunnyDay),
                 SizedBox(height:30),
-              TextData.pageName(content:"Trimitem cererea pentru acord"),
+              PageTitle(content:"Trimitem cererea pentru acord"),
               SizedBox(height:20),
-              TextData.centerText(content: "Introdu adresa de email a unui părinte sau tutore. Îi vom trimite un link unde poate citi informțiile despre FutureMe și își poate da acordul."),
-           
+              CenterText(content: "Introdu adresa de email a unui părinte sau tutore. Îi vom trimite un link unde poate citi informțiile despre FutureMe și își poate da acordul."),
+
               SizedBox(height: 30,),
-              TextData.roundedContainer(
+              RoundedCard(
                 contents: [
-                  AssetData.textForm()
+                  AppTextField()
                 ]
               ),
               SizedBox(height: 5,),
-              TextData.leftLightText(content: "Nu vom trimite materiale promoționale pe această adresă."),
+              LeftLightText(content: "Nu vom trimite materiale promoționale pe această adresă."),
               SizedBox(height: 80,),
-              TextData.customButton(content: "Trimite cererea", onpressed: (){             
+              PrimaryButton(content: "Trimite cererea", onpressed: (){
                 goToNextPage(SendEmailConsent());
               }),
               SizedBox(height: 5,),
-               TextData.tagText(content: "Revin mai târziu")
+               TagButton(content: "Revin mai târziu")
             ]
           )
 

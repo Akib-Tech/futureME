@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:futureme/core/constants/assets.dart';
-import 'package:futureme/core/constants/text.dart';
+import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/feature/authentication/forgot_password.dart';
+import 'package:futureme/shared/widgets/app_text_field.dart';
+import 'package:futureme/shared/widgets/center_text.dart';
+import 'package:futureme/shared/widgets/custom_app_bar.dart';
+import 'package:futureme/shared/widgets/icon_divider.dart';
+import 'package:futureme/shared/widgets/left_bold_text.dart';
+import 'package:futureme/shared/widgets/link_text.dart';
+import 'package:futureme/shared/widgets/page_title.dart';
+import 'package:futureme/shared/widgets/primary_button.dart';
+import 'package:futureme/shared/widgets/rounded_card.dart';
+import 'package:futureme/shared/widgets/social_sign_in_button.dart';
 
 
 
@@ -27,74 +37,52 @@ class LoginPageState extends State<LoginPage>{
     @override
     Widget build(BuildContext context){
         return Scaffold(
-          backgroundColor : Color(TextData.backgroundColor),
+          backgroundColor : AppColors.background,
           body: SingleChildScrollView(
             child: Container(
             padding: EdgeInsets.all(30),
             child:  Column(
             children:[
-              AssetData.customAppBar(context),
+              CustomAppBar(context),
                SizedBox(height:30),
-              TextData.pageName(content:"Creează-ți contul"),
+              PageTitle(content:"Creează-ți contul"),
               SizedBox(height:20),
-              TextData.centerText(content: "Contul tău îți păstrează progresul și raportul FutureMe în siguranță."),
-              SizedBox(height:20),  
-               TextData.leftBoldText(content: "Email"),
-               SizedBox(height:10), 
-              TextData.roundedContainer(contents: [
-                AssetData.textForm(),
+              CenterText(content: "Contul tău îți păstrează progresul și raportul FutureMe în siguranță."),
+              SizedBox(height:20),
+               LeftBoldText(content: "Email"),
+               SizedBox(height:10),
+              RoundedCard(contents: [
+                AppTextField(),
               ]),
-              SizedBox(height:20),  
-               TextData.leftBoldText(content: "Parolă"),
-               SizedBox(height:10), 
-              TextData.roundedContainer(contents: [
-                AssetData.textForm(),
+              SizedBox(height:20),
+               LeftBoldText(content: "Parolă"),
+               SizedBox(height:10),
+              RoundedCard(contents: [
+                AppTextField(),
               ]),
 
               SizedBox(height: 20,),
-              TextData.customButton(content: "Creează contul", onpressed: (){
+              PrimaryButton(content: "Creează contul", onpressed: (){
                goToNextPage(ForgotPassword());
               }),
                SizedBox(height: 20,),
-               AssetData.divider(),
+               IconDivider(),
                 SizedBox(height: 20,),
-              TextData.roundedContainer(
+              SocialSignInButton(
+                icon: AppAssets.googleIcon,
+                label: "Continuă cu Google",
+              ),
+              SizedBox(
+                height: 20,
+              ),
+              SocialSignInButton(
+                icon: AppAssets.appleIcon,
+                label: "Continuă cu Google",
+              ),
+              SizedBox(
+                height: 20,
+              ),
 
-                contentPadding: EdgeInsets.symmetric(horizontal: 90,vertical: 15),
-                contents: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                  Image.asset(AssetData.googleIcon),
-                   SizedBox(width: 6,),
-                  Expanded(child: TextData.linkText(content: "Continuă cu Google")
-                  ,)
-                ],)
-              ]),
-              SizedBox(
-                height: 20,
-              ),
-               TextData.roundedContainer(
-                 contentPadding: EdgeInsets.symmetric(horizontal: 90,vertical: 15),
-                
-                contents: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                  Image.asset(AssetData.appleIcon),
-                  SizedBox(width: 6,),
-                  Expanded(
-                  child:TextData.linkText(
-                    content: "Continuă cu Google",
-                   )
-                  )
-                
-                ],)
-              ]),
-              SizedBox(
-                height: 20,
-              ),
-              
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 70),
                 child: Row(
@@ -105,7 +93,7 @@ class LoginPageState extends State<LoginPage>{
                 width: 5,
               ),
                Expanded(
-               child: TextData.linkText(content: "Conectează-te")
+               child: LinkText(content: "Conectează-te")
                 ,)
               ],),
               )

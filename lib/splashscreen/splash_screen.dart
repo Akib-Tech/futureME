@@ -7,24 +7,23 @@ import '../core/constants/assets.dart';
 
 class SplashScreen extends StatelessWidget{
       const SplashScreen({super.key});
-      
+
         @override
         Widget build(BuildContext context) {
             return Scaffold(
               body: GestureDetector(
                 onTap: (){
                   Navigator.push(context,
-                  MaterialPageRoute(builder: 
+                  MaterialPageRoute(builder:
                   (context) => OnboardingScreen()
                   )
                   );
                 } ,
                 child: Center(
-                child: SvgPicture.asset(AssetData.splashImage), 
+                child: SvgPicture.asset(AppAssets.splashImage),
               )
               )
             );
         }
 
 }
-

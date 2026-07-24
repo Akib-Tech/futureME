@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:futureme/core/constants/assets.dart';
-import 'package:futureme/core/constants/text.dart';
+import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/feature/starterInfo/success_payment.dart';
+import 'package:futureme/shared/widgets/center_text.dart';
+import 'package:futureme/shared/widgets/custom_app_bar.dart';
+import 'package:futureme/shared/widgets/page_title.dart';
+import 'package:futureme/shared/widgets/primary_button.dart';
 
 class PricingPackage extends StatefulWidget{
     const PricingPackage({super.key});
@@ -14,38 +17,38 @@ class PricingPackageState extends State<PricingPackage>{
    void goToNextPage(Widget? nextPage){
       Navigator.push(context,MaterialPageRoute(builder: (context) => nextPage! ));
   }
- 
+
 @override
 Widget build(BuildContext context){
   return Scaffold(
-    backgroundColor: Color(0xFFFEF6F2),
+    backgroundColor: AppColors.background,
     body: SingleChildScrollView(
     padding: EdgeInsets.all(0),
     scrollDirection:Axis.vertical,
     child: Container(
       padding: EdgeInsets.all(0),
       decoration: BoxDecoration(
-            color: const Color(0xFFFEF6F2)
+            color: AppColors.background
         ),
       child:  Column(
         children: [
-        
-              AssetData.customAppBar(context),
+
+              CustomAppBar(context),
                SizedBox(height:30),
           Container(
             padding:EdgeInsets.symmetric(horizontal: 20,vertical: 0),
             child: Column(children: [
-                          TextData.pageName(content: "Alege planul potrivit pentru tine"),
+                          PageTitle(content: "Alege planul potrivit pentru tine"),
              SizedBox(height: 20),
-          TextData.centerText(content: "Ambele planuri includ experiența FutureMe completă: modulele ghidate, raportul personalizat și audio-ul final."),
+          CenterText(content: "Ambele planuri includ experiența FutureMe completă: modulele ghidate, raportul personalizat și audio-ul final."),
             SizedBox(height: 20),
-         
+
             SizedBox(height: 410),
-           TextData.customButton(content:"Continuă cu planul anual",onpressed: (){ 
+           PrimaryButton(content:"Continuă cu planul anual",onpressed: (){
               goToNextPage(SuccessPayment());
             }),
            SizedBox(height: 20),
-            TextData.centerText(content: "Plata este securizată prin magazinul aplicației. Abonamentul se reînnoiește automat și poate fi gestionat oricând.")
+            CenterText(content: "Plata este securizată prin magazinul aplicației. Abonamentul se reînnoiește automat și poate fi gestionat oricând.")
          ] )
           )
     ],)

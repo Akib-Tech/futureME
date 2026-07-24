@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:futureme/core/constants/assets.dart';
-import 'package:futureme/core/constants/text.dart';
+import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/feature/video_welcome_screen.dart';
+import 'package:futureme/shared/widgets/center_text.dart';
+import 'package:futureme/shared/widgets/page_title.dart';
+import 'package:futureme/shared/widgets/primary_button.dart';
+import 'package:futureme/shared/widgets/tag_button.dart';
+
 class OnboardingScreen extends StatelessWidget{
   const OnboardingScreen({super.key});
 
   @override
   Widget build(BuildContext context){
     return Scaffold(
-      backgroundColor: Color(0xFFFEF6F2),
+      backgroundColor: AppColors.background,
       body: SingleChildScrollView(
         scrollDirection:Axis.vertical,
         padding: EdgeInsets.all(0),
@@ -17,35 +22,35 @@ class OnboardingScreen extends StatelessWidget{
           padding: EdgeInsets.all(0),
         child:Column(
           children: [
-            Image.asset(AssetData.onboardingImage),
+            Image.asset(AppAssets.onboardingImage),
             SvgPicture.asset(
-              AssetData.splashImage
+              AppAssets.splashImage
             ),
             SizedBox(
               height:20
             ),
-            TextData.pageName(content:"Aici ești \nîn siguranță"),  
+            PageTitle(content:"Aici ești \nîn siguranță"),
              SizedBox(
               height:20
             ),
-              TextData.centerText(content: "FutureMe te ghidează pas cu pas să te înțelegi mai bine și să îți clarifici direcția, fără presiune și fără răspunsuri perfecte.",),
+              CenterText(content: "FutureMe te ghidează pas cu pas să te înțelegi mai bine și să îți clarifici direcția, fără presiune și fără răspunsuri perfecte.",),
               SizedBox(
               height:20
             ),
-             TextData.customButton(content: "Încep în ritmul meu",
+             PrimaryButton(content: "Încep în ritmul meu",
              onpressed: (){
               Navigator.push(context,MaterialPageRoute(builder: (context) => VideoWelcome()));
              }
              ),
-             
+
               SizedBox(height:15,),
-              TextData.tagText(content: "Am deja cont"),
+              TagButton(content: "Am deja cont"),
               SizedBox(height:20)
-            
+
           ],
       )
 
-      )   
+      )
        )
 
       ) ; }

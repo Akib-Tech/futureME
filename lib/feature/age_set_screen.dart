@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:futureme/core/constants/assets.dart';
-import 'package:futureme/core/constants/text.dart';
+import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/feature/consent_info.dart';
+import 'package:futureme/shared/widgets/center_text.dart';
+import 'package:futureme/shared/widgets/custom_app_bar.dart';
+import 'package:futureme/shared/widgets/page_title.dart';
+import 'package:futureme/shared/widgets/plain_text.dart';
+import 'package:futureme/shared/widgets/primary_button.dart';
+import 'package:futureme/shared/widgets/rounded_card.dart';
 
 enum AgeBracket {
-  young, 
+  young,
   younger,
   youngest,
   older
@@ -34,17 +39,17 @@ class AgeSetState extends State<AgeSet>{
     @override
     Widget build(BuildContext context){
         return Scaffold(
-          backgroundColor : Color(TextData.backgroundColor),
+          backgroundColor : AppColors.background,
           body: Container(
             padding: EdgeInsets.all(30),
             child:  Column(
             children:[
-              AssetData.customAppBar(context),
+              CustomAppBar(context),
                SizedBox(height:30),
-              TextData.pageName(content:"Pentru o experiență potrivită"),
+              PageTitle(content:"Pentru o experiență potrivită"),
               SizedBox(height:20),
-              TextData.centerText(content: "FutureMe este creat pentru tineri începând cu vârsta de 14 ani. Alege intervalul tău de vârstă, ca să adaptăm pașii următori."),
-              SizedBox(height:20),  
+              CenterText(content: "FutureMe este creat pentru tineri începând cu vârsta de 14 ani. Alege intervalul tău de vârstă, ca să adaptăm pașii următori."),
+              SizedBox(height:20),
               RadioGroup(
                 groupValue: selectedAge,
                 onChanged: (AgeBracket? value){
@@ -53,62 +58,62 @@ class AgeSetState extends State<AgeSet>{
                       selectedAge =value;
                     });
                   }
-                }, 
+                },
                 child: Column(
                   children:[
-              TextData.roundedContainer(
+              RoundedCard(
                contents:  [
                     RadioListTile<AgeBracket>(
-                      title: TextData.generalText( "Sub 14 ani",),
-                      activeColor: Color(TextData.uiHeadingColor),
+                      title: PlainText("Sub 14 ani"),
+                      activeColor: AppColors.uiHeading,
                       value:AgeBracket.youngest,
                        controlAffinity: ListTileControlAffinity.trailing,
                     )
-                  
+
                 ]
               ),
-               SizedBox(height:20),  
-              TextData.roundedContainer(
+               SizedBox(height:20),
+              RoundedCard(
                 contents: [
                    RadioListTile<AgeBracket>(
-                      title: TextData.generalText( "14-15 ani",),
-                      activeColor: Color(TextData.uiHeadingColor),
+                      title: PlainText("14-15 ani"),
+                      activeColor: AppColors.uiHeading,
                       value:AgeBracket.younger,
                        controlAffinity: ListTileControlAffinity.trailing,
                     )
-                  
+
                 ]
               ),
-               SizedBox(height:20),  
-              TextData.roundedContainer(
+               SizedBox(height:20),
+              RoundedCard(
                contents:  [
                   RadioListTile<AgeBracket>(
-                      title: TextData.generalText( "16-17 ani",),
-                      activeColor: Color(TextData.uiHeadingColor),
+                      title: PlainText("16-17 ani"),
+                      activeColor: AppColors.uiHeading,
                       value:AgeBracket.young,
                        controlAffinity: ListTileControlAffinity.trailing,
                     )
-                  
+
                 ]
               ),
-               SizedBox(height:20),  
-              TextData.roundedContainer(
+               SizedBox(height:20),
+              RoundedCard(
                 contents: [
                   RadioListTile<AgeBracket>(
-                      title: TextData.generalText( "+18 ani",),
-                      activeColor: Color(TextData.uiHeadingColor),
+                      title: PlainText("+18 ani"),
+                      activeColor: AppColors.uiHeading,
                       value:AgeBracket.older,
                        controlAffinity: ListTileControlAffinity.trailing,
                     )
-                  
+
                 ]
               ),
                 ])
-                
+
                 ),
 
               SizedBox(height: 40,),
-              TextData.customButton(content: "Continua", onpressed: (){
+              PrimaryButton(content: "Continua", onpressed: (){
                goToNextPage(ConsentInfo());
               })
             ]

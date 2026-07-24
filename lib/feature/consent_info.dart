@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:futureme/core/constants/assets.dart';
-import 'package:futureme/core/constants/text.dart';
+import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/feature/email_consent.dart';
+import 'package:futureme/shared/widgets/center_text.dart';
+import 'package:futureme/shared/widgets/custom_app_bar.dart';
+import 'package:futureme/shared/widgets/icon_divider.dart';
+import 'package:futureme/shared/widgets/page_title.dart';
+import 'package:futureme/shared/widgets/primary_button.dart';
+import 'package:futureme/shared/widgets/tag_button.dart';
 
 
 class ConsentInfo extends StatefulWidget{
@@ -13,7 +19,7 @@ class ConsentInfo extends StatefulWidget{
 
 class ConsentInfoState extends State<ConsentInfo>{
 
-   
+
     void goToNextPage(Widget nextPage){
       Navigator.push(context,MaterialPageRoute(builder: (context) => nextPage ));
     }
@@ -26,29 +32,29 @@ class ConsentInfoState extends State<ConsentInfo>{
     @override
     Widget build(BuildContext context){
         return Scaffold(
-          backgroundColor : Color(TextData.backgroundColor),
+          backgroundColor : AppColors.background,
           body: Container(
             padding: EdgeInsets.all(30),
             child:  Column(
             children:[
-            
-              AssetData.customAppBar(context),
+
+              CustomAppBar(context),
               SizedBox(height:50),
-                Image.asset(AssetData.sunnyDay),
+                Image.asset(AppAssets.sunnyDay),
                 SizedBox(height:30),
-              TextData.pageName(content: "Avem nevoie de acordul unui părinte"),
+              PageTitle(content: "Avem nevoie de acordul unui părinte"),
               SizedBox(height:20),
-              TextData.centerText(content: "Pentru vârsta ta, este nevoie ca un părinte sau tutore legal să își dea acordul înainte să continui evaluarea."),
-              SizedBox(height:20),  
-              AssetData.divider(),
+              CenterText(content: "Pentru vârsta ta, este nevoie ca un părinte sau tutore legal să își dea acordul înainte să continui evaluarea."),
               SizedBox(height:20),
-              TextData.centerText(content: "După acest pas, vei putea merge mai departe în ritmul tău."),
+              IconDivider(),
+              SizedBox(height:20),
+              CenterText(content: "După acest pas, vei putea merge mai departe în ritmul tău."),
               SizedBox(height: 70,),
-              TextData.customButton(content: "Continuă cu acordul", onpressed: (){    
-                goToNextPage(EmailConsent());         
+              PrimaryButton(content: "Continuă cu acordul", onpressed: (){
+                goToNextPage(EmailConsent());
               }),
               SizedBox(height: 20,),
-               TextData.tagText(content: "Revin mai târziu")
+               TagButton(content: "Revin mai târziu")
             ]
           )
 

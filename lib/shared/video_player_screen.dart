@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:futureme/core/constants/assets.dart';
+import 'package:futureme/shared/widgets/video_player_card.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoApp extends StatefulWidget{
@@ -18,7 +18,7 @@ class _VideoAppState extends State<VideoApp>{
       _controller = VideoPlayerController.networkUrl(
         Uri.parse('https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4'),
           viewType:VideoViewType.platformView,
-          videoPlayerOptions: VideoPlayerOptions(allowBackgroundPlayback: true)          
+          videoPlayerOptions: VideoPlayerOptions(allowBackgroundPlayback: true)
            );
            _controller.initialize().then((_) => {
               setState((){})
@@ -29,8 +29,8 @@ class _VideoAppState extends State<VideoApp>{
 
   @override
   Widget build(BuildContext context){
-      return AssetData.videoPlayer(_controller);
-   
+      return VideoPlayerCard(_controller);
+
   }
   @override
   void dispose() {

@@ -1,6 +1,7 @@
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:futureme/core/di/injectable_init.dart';
+import 'package:futureme/core/theme/app_colors.dart';
 import './splashscreen/splash_screen.dart';
 
 void main() {
@@ -19,7 +20,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp( 
       debugShowCheckedModeBanner: false,
-      color: Color(0xFFFEF6F2),
+      color: AppColors.background,
       theme: ThemeData(
     textTheme: GoogleFonts.rubikTextTheme(),
     // or fontFamily: GoogleFonts.rubik().fontFamily,

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:futureme/core/constants/assets.dart';
-import 'package:futureme/core/constants/text.dart';
+import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/feature/age_set_screen.dart';
-import 'package:futureme/shared/video_player_screen.dart';
+import 'package:futureme/shared/widgets/center_text.dart';
+import 'package:futureme/shared/widgets/page_title.dart';
+import 'package:futureme/shared/widgets/primary_button.dart';
+import 'package:futureme/shared/widgets/video_lesson_card.dart';
 
 class VideoWelcome extends StatefulWidget{
     const VideoWelcome({super.key});
@@ -13,63 +16,41 @@ class VideoWelcome extends StatefulWidget{
 }
 
 class VideoWelcomeState extends State<VideoWelcome>{
-  
- 
+
+
 @override
 Widget build(BuildContext context){
   return Scaffold(
-    backgroundColor: Color(0xFFFEF6F2),
+    backgroundColor: AppColors.background,
     body: SingleChildScrollView(
     padding: EdgeInsets.all(0),
     scrollDirection:Axis.vertical,
     child: Container(
       padding: EdgeInsets.all(0),
       decoration: BoxDecoration(
-            color: const Color(0xFFFEF6F2)
+            color: AppColors.background
         ),
       child:  Column(
         children: [
       Image.asset(
-      AssetData.fullOnboardingImage,
+      AppAssets.fullOnboardingImage,
       fit:BoxFit.contain,
 
       ),
             SvgPicture.asset(
-              AssetData.splashImage
+              AppAssets.splashImage
             ),
 SizedBox(height: 20),
           Container(
             padding:EdgeInsets.symmetric(horizontal: 20,vertical: 0),
             child: Column(children: [
-                          TextData.pageName(content: "Înainte să începem"),
+                          PageTitle(content: "Înainte să începem"),
              SizedBox(height: 20),
-          TextData.centerText(content: "Am pregătit un mesaj scurt pentru tine,\n ca să știi cum vom merge mai departe:\n pas cu pas, fără presiune."),
+          CenterText(content: "Am pregătit un mesaj scurt pentru tine,\n ca să știi cum vom merge mai departe:\n pas cu pas, fără presiune."),
             SizedBox(height: 20),
-          TextData.roundedContainer(contents: [
-            VideoApp(),
-            SizedBox(
-              height: 10,
-            ),
-            TextData.leftBoldText(content: "Mesaj de bun venit"),
-            SizedBox(
-            child:  Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Icon(Icons.timelapse_rounded,
-                color: Color(0xFF6D5D78),
-                ),
-                Expanded(
-                  child:TextData.leftLightText(content: "1 Min"),
-                )
-                
-              ],
-            ),
-            ),
-          
-           
-            ],),
+          VideoLessonCard(title: "Mesaj de bun venit"),
             SizedBox(height: 100),
-           TextData.customButton(content:"Continuation",onpressed: (){ 
+           PrimaryButton(content:"Continuation",onpressed: (){
             Navigator.push(context,MaterialPageRoute(builder: (context) => AgeSet() ));
             }),
          ] )
