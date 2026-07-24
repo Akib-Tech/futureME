@@ -10,6 +10,7 @@ import 'package:futureme/shared/widgets/link_text.dart';
 import 'package:futureme/shared/widgets/page_title.dart';
 import 'package:futureme/shared/widgets/primary_button.dart';
 import 'package:futureme/shared/widgets/rounded_card.dart';
+import 'package:futureme/feature/dashboard/module1_flow.dart';
 
 class ModuleInfo extends StatefulWidget{
     const ModuleInfo({super.key});
@@ -163,7 +164,10 @@ class ModuleInfoState extends State<ModuleInfo> {
           ),
 
           SizedBox(height: 20,),
-          PrimaryButton(content: "Începe Modulul 1"),
+          PrimaryButton(
+            content: "Începe Modulul 1",
+            onpressed: () => startModule1(context),
+          ),
               SizedBox(height: 20,),
 
         ]);

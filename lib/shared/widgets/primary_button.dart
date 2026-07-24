@@ -11,6 +11,7 @@ class PrimaryButton extends StatelessWidget {
     this.borderRadius,
     this.fontSize,
     this.textColor,
+    this.gradient,
   });
 
   final String? content;
@@ -22,6 +23,10 @@ class PrimaryButton extends StatelessWidget {
   final double? fontSize;
   final Color? textColor;
 
+  /// Overrides [color] when set. Matches the design system's
+  /// "Action/Special Gradient" token (#2b0b78 -> #7f378e -> #d35771).
+  final Gradient? gradient;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -30,7 +35,8 @@ class PrimaryButton extends StatelessWidget {
         width: width ?? 345,
         padding: contentPadding ?? const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
         decoration: ShapeDecoration(
-          color: color ?? const Color(0xFF2B0B78) /* ui-action-primary */,
+          color: gradient == null ? (color ?? const Color(0xFF2B0B78) /* ui-action-primary */) : null,
+          gradient: gradient,
           shape: RoundedRectangleBorder(
             borderRadius: borderRadius ?? BorderRadius.circular(100),
           ),

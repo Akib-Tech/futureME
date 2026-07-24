@@ -29,7 +29,11 @@ class OnboardingScreen extends StatelessWidget{
             SizedBox(
               height:20
             ),
-            PageTitle(content:"Aici ești \nîn siguranță"),
+            PageTitle(
+              content:"Aici ești \nîn siguranță",
+              fontSize: 36,
+              fontWeight: FontWeight.w700,
+            ),
              SizedBox(
               height:20
             ),

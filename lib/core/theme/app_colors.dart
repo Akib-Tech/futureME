@@ -9,6 +9,9 @@ class AppColors {
   static const int grad1Value = 0xFF2B0B78;
   static const int containerValue = 0xFF8B7D92;
   static const int borderValue = 0xFFE9DCD7;
+  static const int borderStrongValue = 0xFFD8C6D8;
+  static const int statusInfoBgValue = 0xFFECEBFA;
+  static const int statusInfoFgValue = 0xFF4F4A9E;
   static const int faintValue = 0xffFAF1F8;
   static const int dashboardValue = 0xff211431;
 
@@ -18,6 +21,16 @@ class AppColors {
   static const Color grad1 = Color(grad1Value);
   static const Color container = Color(containerValue);
   static const Color border = Color(borderValue);
+  static const Color borderStrong = Color(borderStrongValue);
+  static const Color statusInfoBg = Color(statusInfoBgValue);
+  static const Color statusInfoFg = Color(statusInfoFgValue);
   static const Color faint = Color(faintValue);
   static const Color dashboard = Color(dashboardValue);
+
+  /// Action/Special Gradient design token.
+  static const LinearGradient specialGradient = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [Color(0xFF2B0B78), Color(0xFF7F378E), Color(0xFFD35771)],
+  );
 }
