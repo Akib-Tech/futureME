@@ -32,10 +32,13 @@ Widget build(BuildContext context){
         ),
       child:  Column(
         children: [
-      Image.asset(
-      AppAssets.fullOnboardingImage,
-      fit:BoxFit.contain,
-
+      SizedBox(
+        width: double.infinity,
+        height: 144,
+        child: Image.asset(
+          AppAssets.fullOnboardingImage,
+          fit: BoxFit.cover,
+        ),
       ),
             SvgPicture.asset(
               AppAssets.splashImage
@@ -45,8 +48,8 @@ SizedBox(height: 20),
             padding:EdgeInsets.symmetric(horizontal: 20,vertical: 0),
             child: Column(children: [
                           PageTitle(content: "Înainte să începem"),
-             SizedBox(height: 20),
-          CenterText(content: "Am pregătit un mesaj scurt pentru tine, ca să știi cum vom merge mai departe: pas cu pas, fără presiune."),
+             SizedBox(height: 16),
+          CenterText(content: "Am pregătit un mesaj scurt pentru tine, ca să știi cum vom merge mai departe: pas cu pas, fără presiune.", width: 305,),
             SizedBox(height: 20),
           VideoLessonCard(title: "Mesaj de bun venit"),
             SizedBox(height: 100),

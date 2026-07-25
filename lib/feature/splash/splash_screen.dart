@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:futureme/core/constants/assets.dart';
+import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/feature/onboarding/onboarding_screen.dart';
 
 class SplashScreen extends StatelessWidget{
@@ -9,6 +8,7 @@ class SplashScreen extends StatelessWidget{
         @override
         Widget build(BuildContext context) {
             return Scaffold(
+              backgroundColor: AppColors.background,
               body: GestureDetector(
                 onTap: (){
                   Navigator.push(context,
@@ -17,9 +17,11 @@ class SplashScreen extends StatelessWidget{
                   )
                   );
                 } ,
-                child: Center(
-                child: SvgPicture.asset(AppAssets.splashImage),
-              )
+                child: Container(
+                  color: AppColors.background,
+                  width: double.infinity,
+                  height: double.infinity,
+                )
               )
             );
         }

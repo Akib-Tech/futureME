@@ -13,11 +13,12 @@ class CustomAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: AppColors.background,
+      elevation: 0,
       leading: GestureDetector(
         onTap: () {
           Navigator.pop(callerContext);
         },
-        child: const Icon(Icons.arrow_back_ios),
+        child: const Icon(Icons.chevron_left, color: AppColors.dashboard),
       ),
     );
   }

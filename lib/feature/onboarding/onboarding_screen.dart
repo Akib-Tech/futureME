@@ -22,7 +22,11 @@ class OnboardingScreen extends StatelessWidget{
           padding: EdgeInsets.all(0),
         child:Column(
           children: [
-            Image.asset(AppAssets.onboardingImage),
+            SizedBox(
+              width: double.infinity,
+              height: 335,
+              child: Image.asset(AppAssets.onboardingImage, fit: BoxFit.cover),
+            ),
             SvgPicture.asset(
               AppAssets.splashImage
             ),
@@ -35,9 +39,9 @@ class OnboardingScreen extends StatelessWidget{
               fontWeight: FontWeight.w700,
             ),
              SizedBox(
-              height:20
+              height:16
             ),
-              CenterText(content: "FutureMe te ghidează pas cu pas să te înțelegi mai bine și să îți clarifici direcția, fără presiune și fără răspunsuri perfecte.",),
+              CenterText(content: "FutureMe te ghidează pas cu pas să te înțelegi mai bine și să îți clarifici direcția, fără presiune și fără răspunsuri perfecte.", width: 305,),
               SizedBox(
               height:20
             ),
@@ -48,7 +52,7 @@ class OnboardingScreen extends StatelessWidget{
              }
              ),
 
-              SizedBox(height:15,),
+              SizedBox(height:8,),
               TagButton(content: "Am deja cont"),
               SizedBox(height:20)
 

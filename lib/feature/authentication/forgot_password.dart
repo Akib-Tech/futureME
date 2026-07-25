@@ -35,33 +35,41 @@ class ForgotPasswordState extends State<ForgotPassword>{
     Widget build(BuildContext context){
         return Scaffold(
           backgroundColor : AppColors.background,
-          body: SingleChildScrollView(
-            child: Container(
-            padding: EdgeInsets.all(30),
-            child:  Column(
-            children:[
-              CustomAppBar(context),
-               SizedBox(height:30),
-              PageTitle(content:"Hai să ne cunoaștem"),
-              SizedBox(height:20),
-              CenterText(content: "Spune-ne prenumele tău, ca fiecare pas să se simtă puțin mai aproape de tine."),
-              SizedBox(height:20),
-               LeftBoldText(content: "Prenume"),
-               SizedBox(height:10),
-               RoundedCard(contents: [
-                AppTextField(hintText: "Ex. Andreea"),
-              ]),
-              SizedBox(height:10),
-               LeftLightText(content:"Îl poți schimba oricând din contul tău."),
-              SizedBox(height:350),
-              PrimaryButton(content: "Continuă", onpressed: (){
-                goToNextPage(FunctionVideo());
-              }),
-
-            ]
-          )
-
-          ),
+          body: SafeArea(
+            child: Column(
+              children: [
+                CustomAppBar(context),
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          PageTitle(content:"Hai să ne cunoaștem"),
+                          const SizedBox(height:16),
+                          CenterText(content: "Spune-ne prenumele tău, ca fiecare pas să se simtă puțin mai aproape de tine.", width: 293,),
+                          const SizedBox(height:40),
+                          LeftBoldText(content: "Prenume"),
+                          const SizedBox(height:8),
+                          RoundedCard(contents: [
+                            AppTextField(hintText: "Ex. Andreea"),
+                          ]),
+                          const SizedBox(height:8),
+                          LeftLightText(content:"Îl poți schimba oricând din contul tău."),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  child: PrimaryButton(content: "Continuă", onpressed: (){
+                    goToNextPage(FunctionVideo());
+                  }),
+                ),
+              ],
+            ),
           )
         );
     }

@@ -22,6 +22,9 @@ class AppColors {
   static const int insightWarmFgValue = 0xFF7A4A00;
   static const int insightSubtleBgValue = 0xFFF6F0F6;
   static const int surfaceHighlightValue = 0xFFFFF3CC;
+  static const int successFgValue = 0xFF3F7A5F;
+  static const int errorFgValue = 0xFF9F3F63;
+  static const int highlightClarityValue = 0xFFFFB600;
 
   static const Color background = Color(backgroundValue);
   static const Color uiHeading = Color(uiHeadingValue);
@@ -42,6 +45,9 @@ class AppColors {
   static const Color insightWarmFg = Color(insightWarmFgValue);
   static const Color insightSubtleBg = Color(insightSubtleBgValue);
   static const Color surfaceHighlight = Color(surfaceHighlightValue);
+  static const Color successFg = Color(successFgValue);
+  static const Color errorFg = Color(errorFgValue);
+  static const Color highlightClarity = Color(highlightClarityValue);
 
   /// Action/Special Gradient design token.
   static const LinearGradient specialGradient = LinearGradient(

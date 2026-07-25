@@ -12,14 +12,14 @@ class SocialSignInButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RoundedCard(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 90, vertical: 15),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
       contents: [
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(icon),
-            const SizedBox(width: 6),
-            Expanded(child: LinkText(content: label)),
+            Image.asset(icon, width: 24, height: 24),
+            const SizedBox(width: 8),
+            LinkText(content: label, shrinkWrap: true),
           ],
         ),
       ],

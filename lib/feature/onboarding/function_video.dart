@@ -41,21 +41,21 @@ Widget build(BuildContext context){
             padding:EdgeInsets.symmetric(horizontal: 20,vertical: 0),
             child: Column(children: [
                           PageTitle(content: "Cum funcționează FutureMe"),
-             SizedBox(height: 20),
+             SizedBox(height: 16),
           CenterText(content: "Înainte să mergem mai departe, ți-am pregătit un mesaj care să îți arate ce urmează și să te ajute să pornești cu mai multă încredere."),
             SizedBox(height: 20),
           VideoLessonCard(title: "Cum va decurge experiența", duration: "2 min"),
             SizedBox(height: 20,),
 
-            CheckIconRow(text: "Fără presiune sau răspunsuri perfecte"),
+            CheckIconRow(text: "Fără presiune sau răspunsuri perfecte", color: AppColors.grad1),
 
              SizedBox(height: 10,),
 
-            CheckIconRow(text: "Te descoperi în ritmul tău"),
+            CheckIconRow(text: "Te descoperi în ritmul tău", color: AppColors.grad1),
 
              SizedBox(height: 10,),
 
-            CheckIconRow(text: "Primești claritate la final"),
+            CheckIconRow(text: "Primești claritate la final", color: AppColors.grad1),
 
             SizedBox(height: 100),
            PrimaryButton(content:"Continuă",onpressed: (){

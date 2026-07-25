@@ -38,70 +38,63 @@ class LoginPageState extends State<LoginPage>{
     Widget build(BuildContext context){
         return Scaffold(
           backgroundColor : AppColors.background,
-          body: SingleChildScrollView(
-            child: Container(
-            padding: EdgeInsets.all(30),
-            child:  Column(
-            children:[
-              CustomAppBar(context),
-               SizedBox(height:30),
-              PageTitle(content:"Creează-ți contul"),
-              SizedBox(height:20),
-              CenterText(content: "Contul tău îți păstrează progresul și raportul FutureMe în siguranță."),
-              SizedBox(height:20),
-               LeftBoldText(content: "Email"),
-               SizedBox(height:10),
-              RoundedCard(contents: [
-                AppTextField(hintText: "exemplu@email.com"),
-              ]),
-              SizedBox(height:20),
-               LeftBoldText(content: "Parolă"),
-               SizedBox(height:10),
-              RoundedCard(contents: [
-                AppTextField(hintText: "Alege o parolă", obscureText: true, suffixIcon: const Icon(Icons.visibility_outlined)),
-              ]),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                children:[
+                  CustomAppBar(context),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 8),
+                        PageTitle(content:"Creează-ți contul"),
+                        const SizedBox(height:16),
+                        CenterText(content: "Contul tău îți păstrează progresul și raportul FutureMe în siguranță.", width: 260,),
+                        const SizedBox(height:40),
+                        LeftBoldText(content: "Email"),
+                        const SizedBox(height:8),
+                        RoundedCard(contents: [
+                          AppTextField(hintText: "exemplu@email.com"),
+                        ]),
+                        const SizedBox(height:24),
+                        LeftBoldText(content: "Parolă"),
+                        const SizedBox(height:8),
+                        RoundedCard(contents: [
+                          AppTextField(hintText: "Alege o parolă", obscureText: true, suffixIcon: const Icon(Icons.visibility_outlined)),
+                        ]),
 
-              SizedBox(height: 20,),
-              PrimaryButton(content: "Creează contul", onpressed: (){
-               goToNextPage(ForgotPassword());
-              }),
-               SizedBox(height: 20,),
-               IconDivider(centerText: "sau"),
-                SizedBox(height: 20,),
-              SocialSignInButton(
-                icon: AppAssets.googleIcon,
-                label: "Continuă cu Google",
+                        const SizedBox(height: 24,),
+                        PrimaryButton(content: "Creează contul", onpressed: (){
+                          goToNextPage(ForgotPassword());
+                        }),
+                        const SizedBox(height: 24,),
+                        IconDivider(centerText: "sau"),
+                        const SizedBox(height: 24,),
+                        SocialSignInButton(
+                          icon: AppAssets.googleIcon,
+                          label: "Continuă cu Google",
+                        ),
+                        const SizedBox(height: 16),
+                        SocialSignInButton(
+                          icon: AppAssets.appleIcon,
+                          label: "Continuă cu Apple",
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text("Ai deja cont? "),
+                            LinkText(content: "Conectează-te", shrinkWrap: true),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ]
               ),
-              SizedBox(
-                height: 20,
-              ),
-              SocialSignInButton(
-                icon: AppAssets.appleIcon,
-                label: "Continuă cu Apple",
-              ),
-              SizedBox(
-                height: 20,
-              ),
-
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 70),
-                child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                Text( "Ai deja cont? "),
-                SizedBox(
-                width: 5,
-              ),
-               Expanded(
-               child: LinkText(content: "Conectează-te")
-                ,)
-              ],),
-              )
-
-            ]
-          )
-
-          ),
+            ),
           )
         );
     }
