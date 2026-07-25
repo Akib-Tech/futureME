@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:futureme/core/theme/app_colors.dart';
-import 'package:futureme/feature/starterInfo/function_video.dart';
+import 'package:futureme/feature/onboarding/function_video.dart';
 import 'package:futureme/shared/widgets/center_text.dart';
 import 'package:futureme/shared/widgets/custom_app_bar.dart';
 import 'package:futureme/shared/widgets/left_light_text.dart';
@@ -44,17 +44,17 @@ class ForgotPasswordState extends State<ForgotPassword>{
                SizedBox(height:30),
               PageTitle(content:"Hai să ne cunoaștem"),
               SizedBox(height:20),
-              CenterText(content: "Spune-ne prenumele tău, ca fiecare pas să se simtă puțin mai aproape de tine"),
+              CenterText(content: "Spune-ne prenumele tău, ca fiecare pas să se simtă puțin mai aproape de tine."),
               SizedBox(height:20),
                LeftBoldText(content: "Prenume"),
                SizedBox(height:10),
                RoundedCard(contents: [
-                AppTextField(),
+                AppTextField(hintText: "Ex. Andreea"),
               ]),
               SizedBox(height:10),
                LeftLightText(content:"Îl poți schimba oricând din contul tău."),
               SizedBox(height:350),
-              PrimaryButton(content: "Continua", onpressed: (){
+              PrimaryButton(content: "Continuă", onpressed: (){
                 goToNextPage(FunctionVideo());
               }),
 

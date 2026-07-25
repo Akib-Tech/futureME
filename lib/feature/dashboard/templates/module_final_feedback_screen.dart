@@ -22,36 +22,51 @@ class ModuleFinalFeedbackScreen extends StatelessWidget {
     required this.moduleLabel,
     required this.title,
     required this.description,
-    required this.synthesisTitle,
-    required this.synthesisDescription,
     required this.connectionsTitle,
     required this.connections,
     required this.infoNote,
     required this.continueLabel,
     required this.onContinue,
-    required this.chatLabel,
-    required this.onChat,
+    this.chatLabel,
+    this.onChat,
+    this.synthesisTitle,
+    this.synthesisDescription,
     this.explorationTitle,
     this.explorationItems,
+    this.secondConnectionsTitle,
+    this.secondConnections,
   });
 
   final String moduleLabel;
   final String title;
   final String description;
-  final String synthesisTitle;
-  final String synthesisDescription;
   final String connectionsTitle;
   final List<ConnectionItem> connections;
   final String infoNote;
   final String continueLabel;
-  final String chatLabel;
+  final String? chatLabel;
   final VoidCallback onContinue;
-  final VoidCallback onChat;
+
+  /// When null, the Chat button is omitted (Figma frame 315:1785, Module 5
+  /// Personal Profile — a single Primary Button, no secondary Chat action).
+  final VoidCallback? onChat;
+
+  /// Optional tinted synthesis box (Figma frame 190:1271, Modules 2/3) —
+  /// omitted on modules whose Final Feedback goes straight from the
+  /// description into the cards section (e.g. Module 4).
+  final String? synthesisTitle;
+  final String? synthesisDescription;
 
   /// Optional "Arii care merită explorate" checklist (Figma frame 229:2289,
   /// Module 3 only) — a tinted card with a simple checkmark list.
   final String? explorationTitle;
   final List<String>? explorationItems;
+
+  /// Optional second white card in the same icon/title/description row
+  /// style as [connections] (Figma frame 258:1872 "O zonă care merită
+  /// dezvoltată", Module 4 only).
+  final String? secondConnectionsTitle;
+  final List<ConnectionItem>? secondConnections;
 
   @override
   Widget build(BuildContext context) {
@@ -100,42 +115,44 @@ class ModuleFinalFeedbackScreen extends StatelessWidget {
                         letterSpacing: -0.16,
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.faint /* ui-surface-tint */,
-                        border: Border.all(color: AppColors.borderStrong),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            synthesisTitle,
-                            style: const TextStyle(
-                              color: AppColors.uiHeading /* ui-text-heading */,
-                              fontSize: 20,
-                              fontFamily: AppFonts.heading,
-                              fontWeight: FontWeight.w500,
-                              height: 1.2,
+                    if (synthesisTitle != null) ...[
+                      const SizedBox(height: 24),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.faint /* ui-surface-tint */,
+                          border: Border.all(color: AppColors.borderStrong),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              synthesisTitle!,
+                              style: const TextStyle(
+                                color: AppColors.uiHeading /* ui-text-heading */,
+                                fontSize: 20,
+                                fontFamily: AppFonts.heading,
+                                fontWeight: FontWeight.w500,
+                                height: 1.2,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            synthesisDescription,
-                            style: const TextStyle(
-                              color: AppColors.uiHeadingSmall /* ui-text-secondary */,
-                              fontSize: 14,
-                              fontFamily: AppFonts.body,
-                              fontWeight: FontWeight.w400,
-                              height: 1.5,
+                            const SizedBox(height: 8),
+                            Text(
+                              synthesisDescription ?? "",
+                              style: const TextStyle(
+                                color: AppColors.uiHeadingSmall /* ui-text-secondary */,
+                                fontSize: 14,
+                                fontFamily: AppFonts.body,
+                                fontWeight: FontWeight.w400,
+                                height: 1.5,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
                     const SizedBox(height: 24),
                     Container(
                       width: double.infinity,
@@ -173,6 +190,45 @@ class ModuleFinalFeedbackScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+                    if (secondConnections != null) ...[
+                      const SizedBox(height: 24),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white /* ui-surface-card */,
+                          border: Border.all(color: AppColors.border),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: const [
+                            BoxShadow(color: Color(0x59CFB2A4), blurRadius: 4, offset: Offset(0, 4)),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              secondConnectionsTitle ?? "",
+                              style: const TextStyle(
+                                color: AppColors.uiHeading /* ui-text-heading */,
+                                fontSize: 20,
+                                fontFamily: AppFonts.heading,
+                                fontWeight: FontWeight.w500,
+                                height: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            for (int i = 0; i < secondConnections!.length; i++) ...[
+                              if (i > 0) ...[
+                                const SizedBox(height: 16),
+                                Divider(color: AppColors.border, height: 1, thickness: 1),
+                                const SizedBox(height: 16),
+                              ],
+                              _ConnectionRow(item: secondConnections![i]),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                     if (explorationItems != null) ...[
                       const SizedBox(height: 24),
                       Container(
@@ -271,35 +327,37 @@ class ModuleFinalFeedbackScreen extends StatelessWidget {
               child: Column(
                 children: [
                   PrimaryButton(content: continueLabel, onpressed: onContinue),
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: onChat,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.grad1),
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.chat_bubble_outline, size: 24, color: AppColors.grad1),
-                          const SizedBox(width: 8),
-                          Text(
-                            chatLabel,
-                            style: const TextStyle(
-                              color: AppColors.grad1 /* ui-action-primary */,
-                              fontSize: 16,
-                              fontFamily: AppFonts.body,
-                              fontWeight: FontWeight.w500,
-                              height: 1.25,
+                  if (onChat != null) ...[
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: onChat,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.grad1),
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.chat_bubble_outline, size: 24, color: AppColors.grad1),
+                            const SizedBox(width: 8),
+                            Text(
+                              chatLabel ?? "",
+                              style: const TextStyle(
+                                color: AppColors.grad1 /* ui-action-primary */,
+                                fontSize: 16,
+                                fontFamily: AppFonts.body,
+                                fontWeight: FontWeight.w500,
+                                height: 1.25,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

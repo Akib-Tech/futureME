@@ -2,7 +2,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:futureme/core/di/injectable_init.dart';
 import 'package:futureme/core/theme/app_colors.dart';
-import './splashscreen/splash_screen.dart';
+import './feature/splash/splash_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

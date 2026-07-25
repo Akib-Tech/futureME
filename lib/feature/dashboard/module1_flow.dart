@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:futureme/feature/dashboard/module_complete_screen.dart';
-import 'package:futureme/feature/dashboard/module_feedback_summary_screen.dart';
-import 'package:futureme/feature/dashboard/module_introduction_screen.dart';
-import 'package:futureme/feature/dashboard/module_question_screen.dart';
+import 'package:futureme/feature/chat/chat_flow.dart';
+import 'package:futureme/feature/dashboard/dashboard_navigation.dart';
+import 'package:futureme/feature/dashboard/templates/module_complete_screen.dart';
+import 'package:futureme/feature/dashboard/module_progress.dart';
+import 'package:futureme/feature/dashboard/templates/module_feedback_summary_screen.dart';
+import 'package:futureme/feature/dashboard/templates/module_introduction_screen.dart';
+import 'package:futureme/feature/dashboard/templates/module_question_screen.dart';
 import 'package:futureme/feature/dashboard/module2_flow.dart';
 
 /// Wires the Module 1 screens (Figma frames 74:335, 80:408/510/550,
@@ -91,6 +94,7 @@ void _openQuestion3(BuildContext context) {
 }
 
 void _openComplete(BuildContext context) {
+  ModuleProgress.markCompleted(1);
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
@@ -100,7 +104,7 @@ void _openComplete(BuildContext context) {
             "Ai făcut primul pas. Răspunsurile tale au fost salvate și ne ajută să înțelegem mai bine de unde pornești.",
         encouragementNote: "În continuare, îți arătăm un feedback scurt despre ce ai conturat până acum.",
         onContinue: () => _openFeedbackSummary(context),
-        onHome: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onHome: () => goToDashboard(context),
       ),
     ),
   );
@@ -137,8 +141,7 @@ void _openFeedbackSummary(BuildContext context) {
         nextModuleDescription: "Vei explora felul în care gândești, iei decizii și reacționezi în situații diferite.",
         continueLabel: "Continuă cu Modulul 2",
         onContinue: () => startModule2(context),
-        // Chat isn't implemented yet.
-        onChat: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onChat: () => openChat(context, contextLabel: "Modulul 1 · Răspunsurile tale", continueLabel: "Continuă cu Modulul 2", onContinue: () => startModule2(context)),
       ),
     ),
   );

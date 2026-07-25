@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 
 class TagButton extends StatelessWidget {
-  const TagButton({super.key, this.content});
+  const TagButton({super.key, this.content, this.onTap});
 
   final String? content;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
       decoration: ShapeDecoration(
@@ -32,6 +35,7 @@ class TagButton extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

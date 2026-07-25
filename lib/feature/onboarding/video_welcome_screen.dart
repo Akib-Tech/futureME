@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:futureme/core/constants/assets.dart';
 import 'package:futureme/core/theme/app_colors.dart';
-import 'package:futureme/feature/age_set_screen.dart';
+import 'package:futureme/feature/age_gate/age_set_screen.dart';
 import 'package:futureme/shared/widgets/center_text.dart';
 import 'package:futureme/shared/widgets/page_title.dart';
 import 'package:futureme/shared/widgets/primary_button.dart';
@@ -46,11 +46,11 @@ SizedBox(height: 20),
             child: Column(children: [
                           PageTitle(content: "Înainte să începem"),
              SizedBox(height: 20),
-          CenterText(content: "Am pregătit un mesaj scurt pentru tine,\n ca să știi cum vom merge mai departe:\n pas cu pas, fără presiune."),
+          CenterText(content: "Am pregătit un mesaj scurt pentru tine, ca să știi cum vom merge mai departe: pas cu pas, fără presiune."),
             SizedBox(height: 20),
           VideoLessonCard(title: "Mesaj de bun venit"),
             SizedBox(height: 100),
-           PrimaryButton(content:"Continuation",onpressed: (){
+           PrimaryButton(content:"Continuă",onpressed: (){
             Navigator.push(context,MaterialPageRoute(builder: (context) => AgeSet() ));
             }),
          ] )

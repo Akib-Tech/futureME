@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:futureme/core/theme/app_colors.dart';
-import 'package:futureme/feature/starterInfo/pricing_package.dart';
+import 'package:futureme/feature/paywall/pricing_package.dart';
 import 'package:futureme/shared/widgets/center_text.dart';
 import 'package:futureme/shared/widgets/check_icon_row.dart';
 import 'package:futureme/shared/widgets/custom_app_bar.dart';
@@ -44,7 +44,7 @@ Widget build(BuildContext context){
              SizedBox(height: 20),
           CenterText(content: "Înainte să mergem mai departe, ți-am pregătit un mesaj care să îți arate ce urmează și să te ajute să pornești cu mai multă încredere."),
             SizedBox(height: 20),
-          VideoLessonCard(title: "Cum va decurge experiența"),
+          VideoLessonCard(title: "Cum va decurge experiența", duration: "2 min"),
             SizedBox(height: 20,),
 
             CheckIconRow(text: "Fără presiune sau răspunsuri perfecte"),
@@ -58,7 +58,7 @@ Widget build(BuildContext context){
             CheckIconRow(text: "Primești claritate la final"),
 
             SizedBox(height: 100),
-           PrimaryButton(content:"Continuation",onpressed: (){
+           PrimaryButton(content:"Continuă",onpressed: (){
               goToNextPage(PricingPackage());
             }),
          ] )

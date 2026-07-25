@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:futureme/feature/dashboard/module_complete_screen.dart';
-import 'package:futureme/feature/dashboard/module_feedback_summary_screen.dart';
-import 'package:futureme/feature/dashboard/module_final_feedback_screen.dart';
-import 'package:futureme/feature/dashboard/module_introduction_screen.dart';
-import 'package:futureme/feature/dashboard/module_mbti_question_screen.dart';
-import 'package:futureme/feature/dashboard/module_roadmap_screen.dart';
-import 'package:futureme/feature/dashboard/module_scale_question_screen.dart';
+import 'package:futureme/feature/chat/chat_flow.dart';
+import 'package:futureme/feature/dashboard/dashboard_navigation.dart';
+import 'package:futureme/feature/dashboard/templates/module_complete_screen.dart';
+import 'package:futureme/feature/dashboard/module_progress.dart';
+import 'package:futureme/feature/dashboard/templates/module_feedback_summary_screen.dart';
+import 'package:futureme/feature/dashboard/templates/module_final_feedback_screen.dart';
+import 'package:futureme/feature/dashboard/templates/module_introduction_screen.dart';
+import 'package:futureme/feature/dashboard/templates/module_mbti_question_screen.dart';
+import 'package:futureme/feature/dashboard/templates/module_roadmap_screen.dart';
+import 'package:futureme/feature/dashboard/templates/module_scale_question_screen.dart';
 import 'package:futureme/feature/dashboard/module3_flow.dart';
-import 'package:futureme/feature/dashboard/stage_complete_screen.dart';
+import 'package:futureme/feature/dashboard/templates/stage_complete_screen.dart';
 
 /// Wires the Module 2 screens into a push-based flow. Currently covers
 /// Stage 1 only (Figma frames 94:600, 130:620, 147:1239 template,
@@ -208,7 +211,7 @@ void _openStage1Complete(BuildContext context) {
         primaryLabel: "Vezi feedbackul",
         onPrimary: () => _openStage1Feedback(context),
         secondaryLabel: "Revin mai târziu",
-        onSecondary: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onSecondary: () => goToDashboard(context),
       ),
     ),
   );
@@ -248,7 +251,7 @@ void _openStage1Feedback(BuildContext context) {
         continueLabel: "Continuă cu Personalitatea ta",
         chatLabel: "Discută feedbackul în Chat",
         onContinue: () => _openStage2Intro(context),
-        onChat: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 1 · Feedback scurt", continueLabel: "Continuă cu Personalitatea ta", onContinue: () => _openStage2Intro(context)),
       ),
     ),
   );
@@ -312,7 +315,7 @@ void _openStage2Complete(BuildContext context) {
         primaryLabel: "Vezi feedbackul",
         onPrimary: () => _openStage2Feedback(context),
         secondaryLabel: "Revin mai târziu",
-        onSecondary: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onSecondary: () => goToDashboard(context),
       ),
     ),
   );
@@ -363,7 +366,7 @@ void _openStage2Feedback(BuildContext context) {
         continueLabel: "Continuă cu Stilul cognitiv",
         chatLabel: "Discută feedbackul în Chat",
         onContinue: () => _openStage3Intro(context),
-        onChat: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 2 · Feedback scurt", continueLabel: "Continuă cu Stilul cognitiv", onContinue: () => _openStage3Intro(context)),
       ),
     ),
   );
@@ -426,7 +429,7 @@ void _openStage3Complete(BuildContext context) {
         primaryLabel: "Vezi feedbackul",
         onPrimary: () => _openStage3Feedback(context),
         secondaryLabel: "Revin mai târziu",
-        onSecondary: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onSecondary: () => goToDashboard(context),
       ),
     ),
   );
@@ -476,7 +479,7 @@ void _openStage3Feedback(BuildContext context) {
         continueLabel: "Continuă cu Stilul decizional",
         chatLabel: "Discută feedbackul în Chat",
         onContinue: () => _openStage4Intro(context),
-        onChat: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 3 · Feedback scurt", continueLabel: "Continuă cu Stilul decizional", onContinue: () => _openStage4Intro(context)),
       ),
     ),
   );
@@ -540,7 +543,7 @@ void _openStage4Complete(BuildContext context) {
         primaryLabel: "Vezi feedbackul",
         onPrimary: () => _openStage4Feedback(context),
         secondaryLabel: "Revin mai târziu",
-        onSecondary: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onSecondary: () => goToDashboard(context),
       ),
     ),
   );
@@ -589,7 +592,7 @@ void _openStage4Feedback(BuildContext context) {
         continueLabel: "Continuă cu Tiparele emoționale",
         chatLabel: "Discută feedbackul în Chat",
         onContinue: () => _openStage5Intro(context),
-        onChat: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 4 · Feedback scurt", continueLabel: "Continuă cu Tiparele emoționale", onContinue: () => _openStage5Intro(context)),
       ),
     ),
   );
@@ -652,7 +655,7 @@ void _openStage5Complete(BuildContext context) {
         primaryLabel: "Vezi feedbackul",
         onPrimary: () => _openStage5Feedback(context),
         secondaryLabel: "Revin mai târziu",
-        onSecondary: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onSecondary: () => goToDashboard(context),
       ),
     ),
   );
@@ -699,7 +702,7 @@ void _openStage5Feedback(BuildContext context) {
         continueLabel: "Continuă cu Controlul perceput",
         chatLabel: "Discută feedbackul în Chat",
         onContinue: () => _openStage6Intro(context),
-        onChat: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 5 · Feedback scurt", continueLabel: "Continuă cu Controlul perceput", onContinue: () => _openStage6Intro(context)),
       ),
     ),
   );
@@ -764,7 +767,7 @@ void _openStage6Complete(BuildContext context) {
         primaryLabel: "Vezi feedbackul",
         onPrimary: () => _openStage6Feedback(context),
         secondaryLabel: "Revin mai târziu",
-        onSecondary: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onSecondary: () => goToDashboard(context),
       ),
     ),
   );
@@ -805,7 +808,7 @@ void _openStage6Feedback(BuildContext context) {
         continueLabel: "Vezi ce ai conturat în Modulul 2",
         chatLabel: "Discută feedbackul în Chat",
         onContinue: () => _openModule2FinalFeedback(context),
-        onChat: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 6 · Feedback scurt", continueLabel: "Vezi ce ai conturat în Modulul 2", onContinue: () => _openModule2FinalFeedback(context)),
       ),
     ),
   );
@@ -845,13 +848,14 @@ void _openModule2FinalFeedback(BuildContext context) {
         continueLabel: "Ascultă mesajul pentru tine",
         chatLabel: "Discută Modulul 2 în Chat",
         onContinue: () => _openModule2Complete(context),
-        onChat: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onChat: () => openChat(context, contextLabel: "Modulul 2 · Imagine de ansamblu", continueLabel: "Ascultă mesajul pentru tine", onContinue: () => _openModule2Complete(context)),
       ),
     ),
   );
 }
 
 void _openModule2Complete(BuildContext context) {
+  ModuleProgress.markCompleted(2);
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
@@ -865,7 +869,7 @@ void _openModule2Complete(BuildContext context) {
         nextModuleTitle: "Interese & vocație",
         nextModuleDescription: "Vei explora ce tipuri de activități, domenii și medii de lucru se potrivesc mai bine cu tine.",
         onContinue: () => startModule3(context),
-        onHome: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onHome: () => goToDashboard(context),
       ),
     ),
   );

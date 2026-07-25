@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:futureme/core/constants/assets.dart';
 import 'package:futureme/core/theme/app_colors.dart';
-import 'package:futureme/feature/email_consent.dart';
+import 'package:futureme/feature/consent/email_consent.dart';
 import 'package:futureme/shared/widgets/center_text.dart';
 import 'package:futureme/shared/widgets/custom_app_bar.dart';
 import 'package:futureme/shared/widgets/icon_divider.dart';
@@ -54,7 +54,7 @@ class ConsentInfoState extends State<ConsentInfo>{
                 goToNextPage(EmailConsent());
               }),
               SizedBox(height: 20,),
-               TagButton(content: "Revin mai târziu")
+               TagButton(content: "Revin mai târziu", onTap: () => Navigator.pop(context))
             ]
           )
 

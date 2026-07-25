@@ -41,7 +41,7 @@ class ConfirmConsentState extends State<ConfirmConsent>{
               SizedBox(height:50),
                 Image.asset(AppAssets.sunnyDay),
                 SizedBox(height:30),
-              PageTitle(content: "Acordul a fost \n confirmat"),
+              PageTitle(content: "Acordul a fost confirmat"),
               SizedBox(height:20),
               CenterText(content: "Mulțumim! Acum poți continua experiența FutureMe."),
               SizedBox(height:20),
@@ -49,7 +49,7 @@ class ConfirmConsentState extends State<ConfirmConsent>{
               SizedBox(height:20),
               CenterText(content: "Răspunsurile tale sunt în siguranță. Le folosim pentru a personaliza pașii, interpretările și raportul tău final. Poți merge mai departe în ritmul tău."),
               SizedBox(height: 180,),
-              PrimaryButton(content: "Continuă ", onpressed: (){
+              PrimaryButton(content: "Continuă", onpressed: (){
                 goToNextPage(LoginPage());
               }),
             ]

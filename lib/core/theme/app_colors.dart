@@ -14,6 +14,14 @@ class AppColors {
   static const int statusInfoFgValue = 0xFF4F4A9E;
   static const int faintValue = 0xffFAF1F8;
   static const int dashboardValue = 0xff211431;
+  static const int insightPrimaryBgValue = 0xFFF2ECFF;
+  static const int insightPrimaryBorderValue = 0xFFCDBAF4;
+  static const int insightPrimaryFgValue = 0xFF3A2384;
+  static const int insightWarmBgValue = 0xFFFFF7E8;
+  static const int insightWarmBorderValue = 0xFFEBCDA6;
+  static const int insightWarmFgValue = 0xFF7A4A00;
+  static const int insightSubtleBgValue = 0xFFF6F0F6;
+  static const int surfaceHighlightValue = 0xFFFFF3CC;
 
   static const Color background = Color(backgroundValue);
   static const Color uiHeading = Color(uiHeadingValue);
@@ -26,6 +34,14 @@ class AppColors {
   static const Color statusInfoFg = Color(statusInfoFgValue);
   static const Color faint = Color(faintValue);
   static const Color dashboard = Color(dashboardValue);
+  static const Color insightPrimaryBg = Color(insightPrimaryBgValue);
+  static const Color insightPrimaryBorder = Color(insightPrimaryBorderValue);
+  static const Color insightPrimaryFg = Color(insightPrimaryFgValue);
+  static const Color insightWarmBg = Color(insightWarmBgValue);
+  static const Color insightWarmBorder = Color(insightWarmBorderValue);
+  static const Color insightWarmFg = Color(insightWarmFgValue);
+  static const Color insightSubtleBg = Color(insightSubtleBgValue);
+  static const Color surfaceHighlight = Color(surfaceHighlightValue);
 
   /// Action/Special Gradient design token.
   static const LinearGradient specialGradient = LinearGradient(

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:futureme/feature/dashboard/module_complete_screen.dart';
-import 'package:futureme/feature/dashboard/module_feedback_summary_screen.dart';
-import 'package:futureme/feature/dashboard/module_final_feedback_screen.dart';
-import 'package:futureme/feature/dashboard/module_introduction_screen.dart';
-import 'package:futureme/feature/dashboard/module_roadmap_screen.dart';
-import 'package:futureme/feature/dashboard/module_scale_question_screen.dart';
+import 'package:futureme/feature/chat/chat_flow.dart';
+import 'package:futureme/feature/dashboard/dashboard_navigation.dart';
+import 'package:futureme/feature/dashboard/module4_flow.dart';
+import 'package:futureme/feature/dashboard/module_progress.dart';
+import 'package:futureme/feature/dashboard/templates/module_complete_screen.dart';
+import 'package:futureme/feature/dashboard/templates/module_feedback_summary_screen.dart';
+import 'package:futureme/feature/dashboard/templates/module_final_feedback_screen.dart';
+import 'package:futureme/feature/dashboard/templates/module_introduction_screen.dart';
+import 'package:futureme/feature/dashboard/templates/module_roadmap_screen.dart';
+import 'package:futureme/feature/dashboard/templates/module_scale_question_screen.dart';
 
 /// Wires the Module 3 screens ("Interese & vocație") into a push-based
 /// flow. Module 3 has only 3 stages, and — unlike Module 2 — no per-stage
@@ -164,7 +168,7 @@ void _openStage1Feedback(BuildContext context) {
         continueLabel: "Continuă cu Etapa 2",
         chatLabel: "Discută feedbackul în Chat",
         onContinue: () => _openStage2Intro(context),
-        onChat: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onChat: () => openChat(context, contextLabel: "Modulul 3 · Etapa 1 · Feedback scurt", continueLabel: "Continuă cu Etapa 2", onContinue: () => _openStage2Intro(context)),
       ),
     ),
   );
@@ -253,7 +257,7 @@ void _openStage2Feedback(BuildContext context) {
         continueLabel: "Continuă cu Etapa 3",
         chatLabel: "Discută feedbackul în Chat",
         onContinue: () => _openStage3Intro(context),
-        onChat: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onChat: () => openChat(context, contextLabel: "Modulul 3 · Etapa 2 · Feedback scurt", continueLabel: "Continuă cu Etapa 3", onContinue: () => _openStage3Intro(context)),
       ),
     ),
   );
@@ -340,7 +344,7 @@ void _openStage3Feedback(BuildContext context) {
         continueLabel: "Vezi imaginea de ansamblu",
         chatLabel: "Discută feedbackul în Chat",
         onContinue: () => _openFinalFeedback(context),
-        onChat: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onChat: () => openChat(context, contextLabel: "Modulul 3 · Etapa 3 · Feedback scurt", continueLabel: "Vezi imaginea de ansamblu", onContinue: () => _openFinalFeedback(context)),
       ),
     ),
   );
@@ -387,13 +391,14 @@ void _openFinalFeedback(BuildContext context) {
         continueLabel: "Ascultă mesajul pentru tine",
         chatLabel: "Discută Modulul 3 în Chat",
         onContinue: () => _openModule3Complete(context),
-        onChat: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onChat: () => openChat(context, contextLabel: "Modulul 3 · Imagine de ansamblu", continueLabel: "Ascultă mesajul pentru tine", onContinue: () => _openModule3Complete(context)),
       ),
     ),
   );
 }
 
 void _openModule3Complete(BuildContext context) {
+  ModuleProgress.markCompleted(3);
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
@@ -407,9 +412,8 @@ void _openModule3Complete(BuildContext context) {
         nextModuleTitle: "Aptitudini & puncte forte",
         nextModuleDescription:
             "Vei vedea ce îți vine mai natural, ce poți dezvolta și ce puncte forte pot susține direcțiile conturate în Modulul 3.",
-        // Module 4 isn't implemented yet — return to the dashboard for now.
-        onContinue: () => Navigator.popUntil(context, (route) => route.isFirst),
-        onHome: () => Navigator.popUntil(context, (route) => route.isFirst),
+        onContinue: () => startModule4(context),
+        onHome: () => goToDashboard(context),
       ),
     ),
   );

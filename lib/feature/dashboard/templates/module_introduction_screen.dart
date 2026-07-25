@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:futureme/core/constants/assets.dart';
 import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/core/theme/app_fonts.dart';
+import 'package:futureme/feature/dashboard/templates/module_final_feedback_screen.dart';
 import 'package:futureme/shared/widgets/center_text.dart';
 import 'package:futureme/shared/widgets/custom_app_bar.dart';
 import 'package:futureme/shared/widgets/page_title.dart';
@@ -17,16 +18,26 @@ class ModuleIntroductionScreen extends StatelessWidget {
     required this.moduleLabel,
     required this.moduleTitle,
     required this.description,
-    required this.nextSteps,
     required this.continueLabel,
     required this.onContinue,
+    this.nextSteps = const [],
+    this.richNextSteps,
     this.progressNote = "Progresul tău este salvat, așa că poți reveni oricând la acest modul.",
-  });
+  }) : assert(
+         nextSteps.length > 0 || richNextSteps != null,
+         "Provide either nextSteps or richNextSteps",
+       );
 
   final String moduleLabel;
   final String moduleTitle;
   final String description;
   final List<String> nextSteps;
+
+  /// Alternate "Ce urmează" card layout (Figma frame 315:1620, Module 5
+  /// Introduction only) — icon/title/description rows instead of a plain
+  /// checkmark list. Takes priority over [nextSteps] when set.
+  final List<ConnectionItem>? richNextSteps;
+
   final String continueLabel;
   final String progressNote;
   final VoidCallback onContinue;
@@ -89,14 +100,24 @@ class ModuleIntroductionScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        for (int i = 0; i < nextSteps.length; i++) ...[
-                          if (i > 0) ...[
-                            const SizedBox(height: 16),
-                            Divider(color: AppColors.border, height: 1, thickness: 1),
-                            const SizedBox(height: 16),
+                        if (richNextSteps != null)
+                          for (int i = 0; i < richNextSteps!.length; i++) ...[
+                            if (i > 0) ...[
+                              const SizedBox(height: 16),
+                              Divider(color: AppColors.border, height: 1, thickness: 1),
+                              const SizedBox(height: 16),
+                            ],
+                            _RichStepRow(item: richNextSteps![i]),
+                          ]
+                        else
+                          for (int i = 0; i < nextSteps.length; i++) ...[
+                            if (i > 0) ...[
+                              const SizedBox(height: 16),
+                              Divider(color: AppColors.border, height: 1, thickness: 1),
+                              const SizedBox(height: 16),
+                            ],
+                            _NextStepRow(text: nextSteps[i]),
                           ],
-                          _NextStepRow(text: nextSteps[i]),
-                        ],
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -148,6 +169,60 @@ class ModuleIntroductionScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RichStepRow extends StatelessWidget {
+  const _RichStepRow({required this.item});
+
+  final ConnectionItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 43,
+          height: 43,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.borderStrong),
+          ),
+          child: Icon(item.icon, color: AppColors.uiHeading),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.title,
+                style: const TextStyle(
+                  color: AppColors.uiHeading /* ui-text-heading */,
+                  fontSize: 16,
+                  fontFamily: AppFonts.body,
+                  fontWeight: FontWeight.w500,
+                  height: 1.375,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                item.description,
+                style: const TextStyle(
+                  color: AppColors.uiHeadingSmall /* ui-text-secondary */,
+                  fontSize: 12,
+                  fontFamily: AppFonts.body,
+                  fontWeight: FontWeight.w400,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

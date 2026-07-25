@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:futureme/core/constants/assets.dart';
 import 'package:futureme/core/theme/app_colors.dart';
-import 'package:futureme/feature/video_welcome_screen.dart';
+import 'package:futureme/feature/onboarding/video_welcome_screen.dart';
 import 'package:futureme/shared/widgets/center_text.dart';
 import 'package:futureme/shared/widgets/page_title.dart';
 import 'package:futureme/shared/widgets/primary_button.dart';
@@ -42,6 +42,7 @@ class OnboardingScreen extends StatelessWidget{
               height:20
             ),
              PrimaryButton(content: "Încep în ritmul meu",
+             gradient: AppColors.specialGradient,
              onpressed: (){
               Navigator.push(context,MaterialPageRoute(builder: (context) => VideoWelcome()));
              }

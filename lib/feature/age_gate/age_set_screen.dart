@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:futureme/core/theme/app_colors.dart';
-import 'package:futureme/feature/consent_info.dart';
+import 'package:futureme/feature/age_gate/age_sixteen_twenty_screen.dart';
+import 'package:futureme/feature/consent/consent_info.dart';
+import 'package:futureme/feature/age_gate/under_fourteen_restricted_screen.dart';
 import 'package:futureme/shared/widgets/center_text.dart';
 import 'package:futureme/shared/widgets/custom_app_bar.dart';
 import 'package:futureme/shared/widgets/page_title.dart';
@@ -25,7 +27,7 @@ class AgeSet extends StatefulWidget{
 
 class AgeSetState extends State<AgeSet>{
 
-    AgeBracket selectedAge = AgeBracket.young;
+    AgeBracket selectedAge = AgeBracket.younger;
 
     void goToNextPage(Widget? nextPage){
       Navigator.push(context,MaterialPageRoute(builder: (context) => nextPage! ));
@@ -113,8 +115,16 @@ class AgeSetState extends State<AgeSet>{
                 ),
 
               SizedBox(height: 40,),
-              PrimaryButton(content: "Continua", onpressed: (){
-               goToNextPage(ConsentInfo());
+              PrimaryButton(content: "Continuă", onpressed: (){
+               switch (selectedAge) {
+                 case AgeBracket.youngest:
+                   goToNextPage(const UnderFourteenRestrictedScreen());
+                 case AgeBracket.younger:
+                   goToNextPage(ConsentInfo());
+                 case AgeBracket.young:
+                 case AgeBracket.older:
+                   goToNextPage(const AgeSixteenTwentyScreen());
+               }
               })
             ]
           )

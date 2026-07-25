@@ -52,13 +52,13 @@ class LoginPageState extends State<LoginPage>{
                LeftBoldText(content: "Email"),
                SizedBox(height:10),
               RoundedCard(contents: [
-                AppTextField(),
+                AppTextField(hintText: "exemplu@email.com"),
               ]),
               SizedBox(height:20),
                LeftBoldText(content: "Parolă"),
                SizedBox(height:10),
               RoundedCard(contents: [
-                AppTextField(),
+                AppTextField(hintText: "Alege o parolă", obscureText: true, suffixIcon: const Icon(Icons.visibility_outlined)),
               ]),
 
               SizedBox(height: 20,),
@@ -66,7 +66,7 @@ class LoginPageState extends State<LoginPage>{
                goToNextPage(ForgotPassword());
               }),
                SizedBox(height: 20,),
-               IconDivider(),
+               IconDivider(centerText: "sau"),
                 SizedBox(height: 20,),
               SocialSignInButton(
                 icon: AppAssets.googleIcon,
@@ -77,7 +77,7 @@ class LoginPageState extends State<LoginPage>{
               ),
               SocialSignInButton(
                 icon: AppAssets.appleIcon,
-                label: "Continuă cu Google",
+                label: "Continuă cu Apple",
               ),
               SizedBox(
                 height: 20,

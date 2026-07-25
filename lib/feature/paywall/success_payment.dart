@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:futureme/core/constants/assets.dart';
 import 'package:futureme/core/theme/app_colors.dart';
-import 'package:futureme/feature/starterInfo/failed_payment.dart';
+import 'package:futureme/feature/dashboard/module_info.dart';
 import 'package:futureme/shared/widgets/center_text.dart';
 import 'package:futureme/shared/widgets/custom_app_bar.dart';
 import 'package:futureme/shared/widgets/page_title.dart';
@@ -45,8 +45,8 @@ Widget build(BuildContext context){
              SizedBox(height: 20),
           CenterText(content: "Totul este pregătit. Poți începe experiența FutureMe și parcurge pașii în ritmul tău."),
            SizedBox(height: 350,),
-              PrimaryButton(content: "Continuă ", onpressed: (){
-                goToNextPage(FailedPayment());
+              PrimaryButton(content: "Începe experiența", gradient: AppColors.specialGradient, onpressed: (){
+                goToNextPage(ModuleInfo());
               }),
          ] )
           )
