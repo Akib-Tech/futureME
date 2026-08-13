@@ -1,7 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:futureme/core/auth/auth_service.dart';
 import 'package:futureme/core/constants/assets.dart';
+import 'package:futureme/core/di/injectable_init.dart';
 import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/feature/authentication/forgot_password.dart';
+import 'package:futureme/feature/authentication/sign_in_screen.dart';
 import 'package:futureme/shared/widgets/app_text_field.dart';
 import 'package:futureme/shared/widgets/center_text.dart';
 import 'package:futureme/shared/widgets/custom_app_bar.dart';
@@ -24,14 +28,42 @@ class LoginPage extends StatefulWidget{
 
 class LoginPageState extends State<LoginPage>{
 
+    final _emailController = TextEditingController();
+    final _passwordController = TextEditingController();
+    bool _isLoading = false;
 
     void goToNextPage(Widget? nextPage){
       Navigator.push(context,MaterialPageRoute(builder: (context) => nextPage! ));
     }
 
+    Future<void> _signUp() async {
+      if (_isLoading) return;
+      setState(() => _isLoading = true);
+      try {
+        await getIt<AuthService>().signUpWithEmail(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+        if (!mounted) return;
+        goToNextPage(ForgotPassword());
+      } on FirebaseAuthException catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(authErrorMessage(e))));
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    }
+
     @override
     void initState(){
       super.initState();
+    }
+
+    @override
+    void dispose(){
+      _emailController.dispose();
+      _passwordController.dispose();
+      super.dispose();
     }
 
     @override
@@ -55,19 +87,20 @@ class LoginPageState extends State<LoginPage>{
                         LeftBoldText(content: "Email"),
                         const SizedBox(height:8),
                         RoundedCard(contents: [
-                          AppTextField(hintText: "exemplu@email.com"),
+                          AppTextField(hintText: "exemplu@email.com", controller: _emailController, keyboardType: TextInputType.emailAddress),
                         ]),
                         const SizedBox(height:24),
                         LeftBoldText(content: "Parolă"),
                         const SizedBox(height:8),
                         RoundedCard(contents: [
-                          AppTextField(hintText: "Alege o parolă", obscureText: true, suffixIcon: const Icon(Icons.visibility_outlined)),
+                          AppTextField(hintText: "Alege o parolă", controller: _passwordController, obscureText: true, suffixIcon: const Icon(Icons.visibility_outlined)),
                         ]),
 
                         const SizedBox(height: 24,),
-                        PrimaryButton(content: "Creează contul", onpressed: (){
-                          goToNextPage(ForgotPassword());
-                        }),
+                        PrimaryButton(
+                          content: _isLoading ? "Se creează..." : "Creează contul",
+                          onpressed: _isLoading ? null : _signUp,
+                        ),
                         const SizedBox(height: 24,),
                         IconDivider(centerText: "sau"),
                         const SizedBox(height: 24,),
@@ -85,7 +118,13 @@ class LoginPageState extends State<LoginPage>{
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const Text("Ai deja cont? "),
-                            LinkText(content: "Conectează-te", shrinkWrap: true),
+                            LinkText(
+                              content: "Conectează-te",
+                              shrinkWrap: true,
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => const SignInScreen()));
+                              },
+                            ),
                           ],
                         ),
                         const SizedBox(height: 24),

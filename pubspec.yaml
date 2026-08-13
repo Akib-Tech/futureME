@@ -42,6 +42,8 @@ dependencies:
   logger: ^2.7.0
   google_fonts:
   video_player: ^2.10.1
+  firebase_core: ^4.13.0
+  firebase_auth: ^6.5.7
 
 
 dev_dependencies:

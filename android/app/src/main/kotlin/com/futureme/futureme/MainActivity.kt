@@ -1,4 +1,4 @@
-package com.example.futureme
+package com.futureme.futureme
 
 import io.flutter.embedding.android.FlutterActivity
 
