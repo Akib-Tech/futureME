@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:futureme/core/constants/assets.dart';
 import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/feature/onboarding/onboarding_screen.dart';
 
@@ -15,12 +17,16 @@ class SplashScreen extends StatelessWidget{
                   MaterialPageRoute(builder:
                   (context) => OnboardingScreen()
                   )
-                  );
+                  );     
                 } ,
                 child: Container(
                   color: AppColors.background,
                   width: double.infinity,
                   height: double.infinity,
+                  child:Center(
+                    child:  SvgPicture.asset(
+              AppAssets.splashImage
+            )     )
                 )
               )
             );

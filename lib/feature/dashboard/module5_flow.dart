@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:futureme/feature/chat/chat_flow.dart';
 import 'package:futureme/feature/dashboard/dashboard_navigation.dart';
+import 'package:futureme/feature/dashboard/module_answers.dart';
 import 'package:futureme/feature/dashboard/module5/module5_complete_screen.dart';
 import 'package:futureme/feature/dashboard/module_progress.dart';
 import 'package:futureme/feature/dashboard/module5/module5_plan_screen.dart';
 import 'package:futureme/feature/dashboard/module5/module5_report_preview_screen.dart';
 import 'package:futureme/feature/dashboard/module5/module5_report_ready_screen.dart';
+import 'package:futureme/feature/dashboard/templates/insight_feedback_gate.dart';
 import 'package:futureme/feature/dashboard/templates/module_audio_message_screen.dart';
 import 'package:futureme/feature/dashboard/templates/module_final_feedback_screen.dart';
 import 'package:futureme/feature/dashboard/templates/module_introduction_screen.dart';
@@ -52,7 +54,10 @@ void startModule5(BuildContext context) {
         ],
         continueLabel: "Vezi imaginea de ansamblu",
         progressNote: "Nu trebuie să decizi totul acum. Modulul acesta te ajută să vezi mai clar ce merită explorat în continuare.",
-        onContinue: () => _openPersonalProfile(context),
+        onContinue: () {
+          markModuleStarted('module5');
+          _openPersonalProfile(context);
+        },
       ),
     ),
   );
@@ -62,39 +67,47 @@ void _openPersonalProfile(BuildContext context) {
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (context) => ModuleFinalFeedbackScreen(
-        moduleLabel: "Modulul 5 · Imagine de ansamblu",
-        title: "Ce se vede când punem totul împreună",
-        description: "Răspunsurile tale încep să arate cum funcționezi, ce te atrage și ce ai nevoie ca să alegi mai clar.",
-        synthesisTitle: "Pe scurt",
-        synthesisDescription:
-            "Pari să funcționezi mai bine când ai spațiu să gândești, repere clare și sens în ceea ce faci. Direcțiile care merită explorate par să combine idei, oameni și sens.",
-        connectionsTitle: "Reperele tale principale",
-        connections: const [
-          ConnectionItem(
-            icon: Icons.favorite_border,
-            title: "Ce îți dorești acum",
-            description: "Mai multă claritate și un drum care să se simtă potrivit pentru tine, nu doar corect „pe hârtie”.",
-          ),
-          ConnectionItem(
-            icon: Icons.psychology_outlined,
-            title: "Cum funcționezi mai bine",
-            description: "Ai nevoie de timp, sens și repere clare ca să nu te pierzi în prea multe variante.",
-          ),
-          ConnectionItem(
-            icon: Icons.explore_outlined,
-            title: "Ce te atrage",
-            description: "Par să merite explorate zone în care lucrezi cu idei, oameni și înțelegere.",
-          ),
-          ConnectionItem(
-            icon: Icons.star_border,
-            title: "Ce puncte forte se văd",
-            description: "Analiza, comunicarea și organizarea par să fie zone pe care poți construi mai departe.",
-          ),
-        ],
-        infoNote: "Nu este o concluzie finală. Este o imagine de ansamblu care ne ajută să alegem direcții mai potrivite de explorat.",
-        continueLabel: "Vezi direcțiile de explorat",
-        onContinue: () => _openDirections(context),
+      builder: (context) => InsightFeedbackGate(
+        scope: 'module5_synthesis',
+        moduleId: 'module1',
+        alsoFromModules: const ['module2', 'module3', 'module4'],
+        loadingLabel: "Modulul 5 · Imagine de ansamblu",
+        builder: (context, insight) => ModuleFinalFeedbackScreen(
+          moduleLabel: "Modulul 5 · Imagine de ansamblu",
+          title: "Ce se vede când punem totul împreună",
+          description: "Răspunsurile tale încep să arate cum funcționezi, ce te atrage și ce ai nevoie ca să alegi mai clar.",
+          synthesisTitle: "Pe scurt",
+          synthesisDescription: insight?.profileDescription ??
+              "Pari să funcționezi mai bine când ai spațiu să gândești, repere clare și sens în ceea ce faci. Direcțiile care merită explorate par să combine idei, oameni și sens.",
+          connectionsTitle: "Reperele tale principale",
+          connections: insight != null && insight.items.isNotEmpty
+              ? insightToConnectionItems(insight)
+              : const [
+                  ConnectionItem(
+                    icon: Icons.favorite_border,
+                    title: "Ce îți dorești acum",
+                    description: "Mai multă claritate și un drum care să se simtă potrivit pentru tine, nu doar corect „pe hârtie”.",
+                  ),
+                  ConnectionItem(
+                    icon: Icons.psychology_outlined,
+                    title: "Cum funcționezi mai bine",
+                    description: "Ai nevoie de timp, sens și repere clare ca să nu te pierzi în prea multe variante.",
+                  ),
+                  ConnectionItem(
+                    icon: Icons.explore_outlined,
+                    title: "Ce te atrage",
+                    description: "Par să merite explorate zone în care lucrezi cu idei, oameni și înțelegere.",
+                  ),
+                  ConnectionItem(
+                    icon: Icons.star_border,
+                    title: "Ce puncte forte se văd",
+                    description: "Analiza, comunicarea și organizarea par să fie zone pe care poți construi mai departe.",
+                  ),
+                ],
+          infoNote: "Nu este o concluzie finală. Este o imagine de ansamblu care ne ajută să alegem direcții mai potrivite de explorat.",
+          continueLabel: "Vezi direcțiile de explorat",
+          onContinue: () => _openDirections(context),
+        ),
       ),
     ),
   );
@@ -434,6 +447,7 @@ void _openGuidedAudio(BuildContext context) {
 
 void _openModule5Complete(BuildContext context) {
   ModuleProgress.markCompleted(5);
+  recordModule5ReportPlaceholder();
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(

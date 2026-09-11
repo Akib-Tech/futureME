@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:futureme/feature/chat/chat_flow.dart';
 import 'package:futureme/feature/dashboard/dashboard_navigation.dart';
 import 'package:futureme/feature/dashboard/module4_flow.dart';
+import 'package:futureme/feature/dashboard/module_answers.dart';
 import 'package:futureme/feature/dashboard/module_progress.dart';
 import 'package:futureme/feature/dashboard/templates/module_complete_screen.dart';
+import 'package:futureme/feature/dashboard/templates/insight_feedback_gate.dart';
 import 'package:futureme/feature/dashboard/templates/module_feedback_summary_screen.dart';
 import 'package:futureme/feature/dashboard/templates/module_final_feedback_screen.dart';
 import 'package:futureme/feature/dashboard/templates/module_introduction_screen.dart';
@@ -57,7 +59,10 @@ void startModule3(BuildContext context) {
         ],
         continueLabel: "Vezi pașii modulului",
         progressNote: "Nu trebuie să știi deja ce carieră vrei. Începem să observăm ce pare să aibă sens pentru tine.",
-        onContinue: () => _openRoadmap(context),
+        onContinue: () {
+          markModuleStarted('module3');
+          _openRoadmap(context);
+        },
       ),
     ),
   );
@@ -125,6 +130,14 @@ void _openStage1Question(BuildContext context, int index) {
         questionNumber: index + 1,
         totalQuestions: _stage1PlaceholderStatements.length,
         onContinue: (selection) {
+          saveModuleAnswer(
+            'module3',
+            'stage1_q${index + 1}',
+            type: 'scale',
+            value: {'selectedIndex': selection},
+            stage: 1,
+            questionNumber: index + 1,
+          );
           if (index + 1 < _stage1PlaceholderStatements.length) {
             _openStage1Question(context, index + 1);
           } else {
@@ -140,35 +153,45 @@ void _openStage1Feedback(BuildContext context) {
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
-      builder: (context) => ModuleFeedbackSummaryScreen(
-        moduleLabel: "Etapa 1 · Feedback scurt",
-        title: "Ce pare să te atragă",
-        description: "Răspunsurile tale arată ce tipuri de activități și domenii au ieșit mai mult în evidență.",
-        profileLabel: "Zone de interes care ies în evidență",
-        profileValue: "Creativ, social și investigativ",
-        profileDescription: "Par să iasă în evidență activitățile în care poți combina idei, oameni și curiozitate.",
-        summaryItems: const [
-          SummaryItem(
-            icon: Icons.palette_outlined,
-            title: "Creativ",
-            description: "Îți pot plăcea activitățile în care exprimi idei, creezi sau găsești forme personale de lucru.",
-          ),
-          SummaryItem(
-            icon: Icons.groups_outlined,
-            title: "Social",
-            description: "Pari să fii atras(ă) de contexte în care poți înțelege, ajuta sau lucra cu oameni.",
-          ),
-          SummaryItem(
-            icon: Icons.search_outlined,
-            title: "Investigativ",
-            description: "Îți pot plăcea activitățile în care cauți explicații și încerci să înțelegi cum funcționează lucrurile.",
-          ),
-        ],
-        infoNote: "Acesta nu este un verdict despre cariera ta. Este un prim indiciu despre zonele care îți trezesc interesul.",
-        continueLabel: "Continuă cu Etapa 2",
-        chatLabel: "Discută feedbackul în Chat",
-        onContinue: () => _openStage2Intro(context),
-        onChat: () => openChat(context, contextLabel: "Modulul 3 · Etapa 1 · Feedback scurt", continueLabel: "Continuă cu Etapa 2", onContinue: () => _openStage2Intro(context)),
+      builder: (context) => InsightFeedbackGate(
+        scope: 'module3_stage1',
+        moduleId: 'module3',
+        stage: 1,
+        loadingLabel: "Etapa 1 · Feedback scurt",
+        builder: (context, insight) => ModuleFeedbackSummaryScreen(
+          moduleLabel: "Etapa 1 · Feedback scurt",
+          title: "Ce pare să te atragă",
+          description: "Răspunsurile tale arată ce tipuri de activități și domenii au ieșit mai mult în evidență.",
+          profileLabel: insight != null ? insight.profileLabel : "Zone de interes care ies în evidență",
+          profileValue: insight != null ? insight.profileValue : "Creativ, social și investigativ",
+          profileDescription: insight != null
+              ? insight.profileDescription
+              : "Par să iasă în evidență activitățile în care poți combina idei, oameni și curiozitate.",
+          summaryItems: insight != null
+              ? insightToSummaryItems(insight)
+              : const [
+                  SummaryItem(
+                    icon: Icons.palette_outlined,
+                    title: "Creativ",
+                    description: "Îți pot plăcea activitățile în care exprimi idei, creezi sau găsești forme personale de lucru.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.groups_outlined,
+                    title: "Social",
+                    description: "Pari să fii atras(ă) de contexte în care poți înțelege, ajuta sau lucra cu oameni.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.search_outlined,
+                    title: "Investigativ",
+                    description: "Îți pot plăcea activitățile în care cauți explicații și încerci să înțelegi cum funcționează lucrurile.",
+                  ),
+                ],
+          infoNote: "Acesta nu este un verdict despre cariera ta. Este un prim indiciu despre zonele care îți trezesc interesul.",
+          continueLabel: "Continuă cu Etapa 2",
+          chatLabel: "Discută feedbackul în Chat",
+          onContinue: () => _openStage2Intro(context),
+          onChat: () => openChat(context, contextLabel: "Modulul 3 · Etapa 1 · Feedback scurt", continueLabel: "Continuă cu Etapa 2", onContinue: () => _openStage2Intro(context)),
+        ),
       ),
     ),
   );
@@ -206,6 +229,14 @@ void _openStage2Question(BuildContext context, int index) {
         questionNumber: index + 1,
         totalQuestions: _stage2PlaceholderStatements.length,
         onContinue: (selection) {
+          saveModuleAnswer(
+            'module3',
+            'stage2_q${index + 1}',
+            type: 'scale',
+            value: {'selectedIndex': selection},
+            stage: 2,
+            questionNumber: index + 1,
+          );
           if (index + 1 < _stage2PlaceholderStatements.length) {
             _openStage2Question(context, index + 1);
           } else {
@@ -221,43 +252,52 @@ void _openStage2Feedback(BuildContext context) {
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
-      builder: (context) => ModuleFeedbackSummaryScreen(
-        moduleLabel: "Etapa 2 · Feedback scurt",
-        title: "Cum îți place să lucrezi",
-        description: "Răspunsurile tale arată ce ritm, câtă libertate și ce fel de sprijin par să te ajute să lucrezi mai natural.",
-        profileLabel: "Stil de lucru care iese în evidență",
-        profileValue: "Libertate cu repere clare",
-        profileDescription:
-            "Pari să lucrezi mai bine când ai spațiu să alegi cum abordezi o sarcină, dar și repere clare care te ajută să știi încotro mergi.",
-        summaryItems: const [
-          SummaryItem(
-            icon: Icons.explore_outlined,
-            title: "Libertate și repere",
-            description: "Pari să ai nevoie de spațiu să alegi cum abordezi o sarcină, dar și de repere clare ca să știi încotro mergi.",
-          ),
-          SummaryItem(
-            icon: Icons.speed_outlined,
-            title: "Ritmul tău",
-            description: "Poți funcționa bine când ritmul se adaptează la tipul de sarcină și la energia ta.",
-          ),
-          SummaryItem(
-            icon: Icons.handshake_outlined,
-            title: "Colaborare",
-            description: "Poți lucra bine cu alții atunci când există respect, ascultare și un scop comun.",
-          ),
-          SummaryItem(
-            icon: Icons.flag_outlined,
-            title: "Ce te ține implicat(ă)",
-            description:
-                "Îți poate fi mai ușor să continui când înțelegi de ce contează ceea ce faci și primești semne că mergi în direcția bună.",
-          ),
-        ],
-        infoNote:
-            "Nu există un singur mod bun de a lucra. Acest feedback arată doar ce condiții par să te ajute să te implici mai natural.",
-        continueLabel: "Continuă cu Etapa 3",
-        chatLabel: "Discută feedbackul în Chat",
-        onContinue: () => _openStage3Intro(context),
-        onChat: () => openChat(context, contextLabel: "Modulul 3 · Etapa 2 · Feedback scurt", continueLabel: "Continuă cu Etapa 3", onContinue: () => _openStage3Intro(context)),
+      builder: (context) => InsightFeedbackGate(
+        scope: 'module3_stage2',
+        moduleId: 'module3',
+        stage: 2,
+        loadingLabel: "Etapa 2 · Feedback scurt",
+        builder: (context, insight) => ModuleFeedbackSummaryScreen(
+          moduleLabel: "Etapa 2 · Feedback scurt",
+          title: "Cum îți place să lucrezi",
+          description: "Răspunsurile tale arată ce ritm, câtă libertate și ce fel de sprijin par să te ajute să lucrezi mai natural.",
+          profileLabel: insight != null ? insight.profileLabel : "Stil de lucru care iese în evidență",
+          profileValue: insight != null ? insight.profileValue : "Libertate cu repere clare",
+          profileDescription: insight != null
+              ? insight.profileDescription
+              : "Pari să lucrezi mai bine când ai spațiu să alegi cum abordezi o sarcină, dar și repere clare care te ajută să știi încotro mergi.",
+          summaryItems: insight != null
+              ? insightToSummaryItems(insight)
+              : const [
+                  SummaryItem(
+                    icon: Icons.explore_outlined,
+                    title: "Libertate și repere",
+                    description: "Pari să ai nevoie de spațiu să alegi cum abordezi o sarcină, dar și de repere clare ca să știi încotro mergi.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.speed_outlined,
+                    title: "Ritmul tău",
+                    description: "Poți funcționa bine când ritmul se adaptează la tipul de sarcină și la energia ta.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.handshake_outlined,
+                    title: "Colaborare",
+                    description: "Poți lucra bine cu alții atunci când există respect, ascultare și un scop comun.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.flag_outlined,
+                    title: "Ce te ține implicat(ă)",
+                    description:
+                        "Îți poate fi mai ușor să continui când înțelegi de ce contează ceea ce faci și primești semne că mergi în direcția bună.",
+                  ),
+                ],
+          infoNote:
+              "Nu există un singur mod bun de a lucra. Acest feedback arată doar ce condiții par să te ajute să te implici mai natural.",
+          continueLabel: "Continuă cu Etapa 3",
+          chatLabel: "Discută feedbackul în Chat",
+          onContinue: () => _openStage3Intro(context),
+          onChat: () => openChat(context, contextLabel: "Modulul 3 · Etapa 2 · Feedback scurt", continueLabel: "Continuă cu Etapa 3", onContinue: () => _openStage3Intro(context)),
+        ),
       ),
     ),
   );
@@ -295,6 +335,14 @@ void _openStage3Question(BuildContext context, int index) {
         questionNumber: index + 1,
         totalQuestions: _stage3PlaceholderStatements.length,
         onContinue: (selection) {
+          saveModuleAnswer(
+            'module3',
+            'stage3_q${index + 1}',
+            type: 'scale',
+            value: {'selectedIndex': selection},
+            stage: 3,
+            questionNumber: index + 1,
+          );
           if (index + 1 < _stage3PlaceholderStatements.length) {
             _openStage3Question(context, index + 1);
           } else {
@@ -310,41 +358,50 @@ void _openStage3Feedback(BuildContext context) {
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
-      builder: (context) => ModuleFeedbackSummaryScreen(
-        moduleLabel: "Etapa 3 · Feedback scurt",
-        title: "Mediile care te susțin",
-        description: "Răspunsurile tale arată ce tipuri de contexte par să îți ofere mai multă claritate, liniște și energie.",
-        profileLabel: "Medii care ies în evidență",
-        profileValue: "Calm și susținător",
-        profileDescription:
-            "Pari să funcționezi mai bine în contexte așezate, cu presiune redusă, oameni respectuoși și spațiu să lucrezi în ritmul tău.",
-        summaryItems: const [
-          SummaryItem(
-            icon: Icons.spa_outlined,
-            title: "Ritm și presiune",
-            description: "Pari să ai nevoie de un mediu în care lucrurile nu se simt mereu grăbite sau apăsătoare.",
-          ),
-          SummaryItem(
-            icon: Icons.balance_outlined,
-            title: "Stabilitate și schimbare",
-            description: "Te poate ajuta un context suficient de previzibil, în care schimbările sunt explicate și nu apar haotic.",
-          ),
-          SummaryItem(
-            icon: Icons.diversity_3_outlined,
-            title: "Oameni și atmosferă",
-            description: "Poți funcționa mai bine când există respect, ascultare și colaborare, fără comparație sau competiție constantă.",
-          ),
-          SummaryItem(
-            icon: Icons.center_focus_strong_outlined,
-            title: "Spațiu pentru concentrare",
-            description: "Îți poate fi mai ușor să lucrezi când ai momente în care te poți concentra fără prea multe întreruperi.",
-          ),
-        ],
-        infoNote: "Nu ai nevoie de un mediu perfect ca să îți fie bine. Acest feedback arată ce condiții par să te susțină mai mult.",
-        continueLabel: "Vezi imaginea de ansamblu",
-        chatLabel: "Discută feedbackul în Chat",
-        onContinue: () => _openFinalFeedback(context),
-        onChat: () => openChat(context, contextLabel: "Modulul 3 · Etapa 3 · Feedback scurt", continueLabel: "Vezi imaginea de ansamblu", onContinue: () => _openFinalFeedback(context)),
+      builder: (context) => InsightFeedbackGate(
+        scope: 'module3_stage3',
+        moduleId: 'module3',
+        stage: 3,
+        loadingLabel: "Etapa 3 · Feedback scurt",
+        builder: (context, insight) => ModuleFeedbackSummaryScreen(
+          moduleLabel: "Etapa 3 · Feedback scurt",
+          title: "Mediile care te susțin",
+          description: "Răspunsurile tale arată ce tipuri de contexte par să îți ofere mai multă claritate, liniște și energie.",
+          profileLabel: insight != null ? insight.profileLabel : "Medii care ies în evidență",
+          profileValue: insight != null ? insight.profileValue : "Calm și susținător",
+          profileDescription: insight != null
+              ? insight.profileDescription
+              : "Pari să funcționezi mai bine în contexte așezate, cu presiune redusă, oameni respectuoși și spațiu să lucrezi în ritmul tău.",
+          summaryItems: insight != null
+              ? insightToSummaryItems(insight)
+              : const [
+                  SummaryItem(
+                    icon: Icons.spa_outlined,
+                    title: "Ritm și presiune",
+                    description: "Pari să ai nevoie de un mediu în care lucrurile nu se simt mereu grăbite sau apăsătoare.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.balance_outlined,
+                    title: "Stabilitate și schimbare",
+                    description: "Te poate ajuta un context suficient de previzibil, în care schimbările sunt explicate și nu apar haotic.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.diversity_3_outlined,
+                    title: "Oameni și atmosferă",
+                    description: "Poți funcționa mai bine când există respect, ascultare și colaborare, fără comparație sau competiție constantă.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.center_focus_strong_outlined,
+                    title: "Spațiu pentru concentrare",
+                    description: "Îți poate fi mai ușor să lucrezi când ai momente în care te poți concentra fără prea multe întreruperi.",
+                  ),
+                ],
+          infoNote: "Nu ai nevoie de un mediu perfect ca să îți fie bine. Acest feedback arată ce condiții par să te susțină mai mult.",
+          continueLabel: "Vezi imaginea de ansamblu",
+          chatLabel: "Discută feedbackul în Chat",
+          onContinue: () => _openFinalFeedback(context),
+          onChat: () => openChat(context, contextLabel: "Modulul 3 · Etapa 3 · Feedback scurt", continueLabel: "Vezi imaginea de ansamblu", onContinue: () => _openFinalFeedback(context)),
+        ),
       ),
     ),
   );
@@ -354,44 +411,51 @@ void _openFinalFeedback(BuildContext context) {
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
-      builder: (context) => ModuleFinalFeedbackScreen(
-        moduleLabel: "Modulul 3 · Imagine de ansamblu",
-        title: "Ce ai descoperit în Modulul 3",
-        description:
-            "Răspunsurile tale arată că nu contează doar domeniul, ci și felul în care lucrezi și mediul în care te simți în largul tău.",
-        synthesisTitle: "Ce iese în evidență",
-        synthesisDescription:
-            "Par să merite explorate direcții în care poți lucra cu idei, oameni și sens. Îți poate fi mai ușor când ai spațiu să gândești, dar și repere clare ca să știi încotro mergi.",
-        connectionsTitle: "Ce ai aflat despre tine",
-        connections: const [
-          ConnectionItem(
-            icon: Icons.favorite_border,
-            title: "Ce te atrage",
-            description: "Activități în care poți crea, explica, analiza sau înțelege mai bine oamenii și ideile.",
-          ),
-          ConnectionItem(
-            icon: Icons.build_outlined,
-            title: "Cum îți place să lucrezi",
-            description: "Cu libertate în felul în care abordezi lucrurile, dar și cu direcție, claritate și un ritm pe care îl poți susține.",
-          ),
-          ConnectionItem(
-            icon: Icons.home_outlined,
-            title: "Mediile care te susțin",
-            description: "Mediile calme, respectuoase, cu presiune redusă și spațiu pentru concentrare.",
-          ),
-        ],
-        explorationTitle: "Arii care merită explorate",
-        explorationItems: const [
-          "Comunicare & creație",
-          "Oameni & sprijin",
-          "Analiză & înțelegere",
-        ],
-        infoNote:
-            "Nu alegem încă o carieră finală. Aceste direcții sunt repere de explorare, iar în Modulul 4 vedem ce puncte forte le pot susține.",
-        continueLabel: "Ascultă mesajul pentru tine",
-        chatLabel: "Discută Modulul 3 în Chat",
-        onContinue: () => _openModule3Complete(context),
-        onChat: () => openChat(context, contextLabel: "Modulul 3 · Imagine de ansamblu", continueLabel: "Ascultă mesajul pentru tine", onContinue: () => _openModule3Complete(context)),
+      builder: (context) => InsightFeedbackGate(
+        scope: 'module3_final',
+        moduleId: 'module3',
+        loadingLabel: "Modulul 3 · Imagine de ansamblu",
+        builder: (context, insight) => ModuleFinalFeedbackScreen(
+          moduleLabel: "Modulul 3 · Imagine de ansamblu",
+          title: "Ce ai descoperit în Modulul 3",
+          description:
+              "Răspunsurile tale arată că nu contează doar domeniul, ci și felul în care lucrezi și mediul în care te simți în largul tău.",
+          synthesisTitle: "Ce iese în evidență",
+          synthesisDescription: insight?.profileDescription ??
+              "Par să merite explorate direcții în care poți lucra cu idei, oameni și sens. Îți poate fi mai ușor când ai spațiu să gândești, dar și repere clare ca să știi încotro mergi.",
+          connectionsTitle: "Ce ai aflat despre tine",
+          connections: insight != null && insight.items.isNotEmpty
+              ? insightToConnectionItems(insight)
+              : const [
+                  ConnectionItem(
+                    icon: Icons.favorite_border,
+                    title: "Ce te atrage",
+                    description: "Activități în care poți crea, explica, analiza sau înțelege mai bine oamenii și ideile.",
+                  ),
+                  ConnectionItem(
+                    icon: Icons.build_outlined,
+                    title: "Cum îți place să lucrezi",
+                    description: "Cu libertate în felul în care abordezi lucrurile, dar și cu direcție, claritate și un ritm pe care îl poți susține.",
+                  ),
+                  ConnectionItem(
+                    icon: Icons.home_outlined,
+                    title: "Mediile care te susțin",
+                    description: "Mediile calme, respectuoase, cu presiune redusă și spațiu pentru concentrare.",
+                  ),
+                ],
+          explorationTitle: "Arii care merită explorate",
+          explorationItems: const [
+            "Comunicare & creație",
+            "Oameni & sprijin",
+            "Analiză & înțelegere",
+          ],
+          infoNote:
+              "Nu alegem încă o carieră finală. Aceste direcții sunt repere de explorare, iar în Modulul 4 vedem ce puncte forte le pot susține.",
+          continueLabel: "Ascultă mesajul pentru tine",
+          chatLabel: "Discută Modulul 3 în Chat",
+          onContinue: () => _openModule3Complete(context),
+          onChat: () => openChat(context, contextLabel: "Modulul 3 · Imagine de ansamblu", continueLabel: "Ascultă mesajul pentru tine", onContinue: () => _openModule3Complete(context)),
+        ),
       ),
     ),
   );

@@ -45,5 +45,20 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!--
+	  Google Sign-In redirect URL scheme. Replace REPLACE_WITH_REVERSED_IOS_CLIENT_ID
+	  with the reversed form of SocialAuthConfig.iosClientId (lib/core/auth/social_auth_config.dart)
+	  once that's filled in — e.g. client ID "123-abc.apps.googleusercontent.com" becomes
+	  "com.googleusercontent.apps.123-abc".
+	-->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>REPLACE_WITH_REVERSED_IOS_CLIENT_ID</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

@@ -3,6 +3,7 @@ import 'package:futureme/core/constants/assets.dart';
 import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/core/theme/app_fonts.dart';
 import 'package:futureme/feature/authentication/login.dart';
+import 'package:futureme/feature/authentication/pending_signup_data.dart';
 import 'package:futureme/shared/widgets/page_title.dart';
 import 'package:futureme/shared/widgets/primary_button.dart';
 
@@ -170,7 +171,12 @@ class _AgeSixteenTwentyScreenState extends State<AgeSixteenTwentyScreen> {
               child: PrimaryButton(
                 content: "Continuă",
                 color: _agreed ? null : AppColors.borderStrong,
-                onpressed: _agreed ? () => Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage())) : null,
+                onpressed: _agreed
+                    ? () {
+                        PendingSignupData.selfConsentAgreedAt = DateTime.now();
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
+                      }
+                    : null,
               ),
             ),
           ],

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:futureme/feature/chat/chat_flow.dart';
 import 'package:futureme/feature/dashboard/dashboard_navigation.dart';
+import 'package:futureme/feature/dashboard/module_answers.dart';
 import 'package:futureme/feature/dashboard/templates/module_complete_screen.dart';
 import 'package:futureme/feature/dashboard/module_progress.dart';
+import 'package:futureme/feature/dashboard/templates/insight_feedback_gate.dart';
 import 'package:futureme/feature/dashboard/templates/module_feedback_summary_screen.dart';
 import 'package:futureme/feature/dashboard/templates/module_final_feedback_screen.dart';
 import 'package:futureme/feature/dashboard/templates/module_introduction_screen.dart';
@@ -105,7 +107,10 @@ void startModule2(BuildContext context) {
         ],
         continueLabel: "Vezi pașii modulului",
         progressNote: "Nu trebuie să termini totul dintr-o dată. Progresul tău este salvat.",
-        onContinue: () => _openRoadmap(context),
+        onContinue: () {
+          markModuleStarted('module2');
+          _openRoadmap(context);
+        },
       ),
     ),
   );
@@ -185,6 +190,14 @@ void _openStage1Question(BuildContext context, int index) {
         questionNumber: index + 1,
         totalQuestions: _stage1PlaceholderStatements.length,
         onContinue: (pointsForA, pointsForB) {
+          saveModuleAnswer(
+            'module2',
+            'stage1_q${index + 1}',
+            type: 'mbti',
+            value: {'pointsForA': pointsForA, 'pointsForB': pointsForB},
+            stage: 1,
+            questionNumber: index + 1,
+          );
           if (index + 1 < _stage1PlaceholderStatements.length) {
             _openStage1Question(context, index + 1);
           } else {
@@ -221,37 +234,47 @@ void _openStage1Feedback(BuildContext context) {
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
-      builder: (context) => ModuleFeedbackSummaryScreen(
-        moduleLabel: "Etapa 1 · Feedback scurt",
-        title: "Profilul tău începe să se contureze",
-        description:
-            "Pe baza răspunsurilor tale, apar primele repere despre cum te raportezi la oameni, informații și decizii.",
-        profileLabel: "Profil orientativ",
-        profileValue: "INFJ",
-        profileDescription:
-            "Răspunsurile tale sugerează un stil atent, orientat spre sens și conectat la ceea ce este important pentru tine.",
-        summaryItems: const [
-          SummaryItem(
-            icon: Icons.bolt_outlined,
-            title: "Energie",
-            description: "Pari să îți încarci energia în spații mai calme sau alături de oameni apropiați.",
-          ),
-          SummaryItem(
-            icon: Icons.lightbulb_outline,
-            title: "Informații",
-            description: "Îți poate fi mai natural să cauți sensul din spatele detaliilor.",
-          ),
-          SummaryItem(
-            icon: Icons.balance_outlined,
-            title: "Decizii",
-            description: "Când iei decizii, pari să ții cont atât de ce simți tu, cât și de impactul asupra celorlalți.",
-          ),
-        ],
-        infoNote: "Acesta este un reper, nu o etichetă. Următoarele etape vor adăuga context.",
-        continueLabel: "Continuă cu Personalitatea ta",
-        chatLabel: "Discută feedbackul în Chat",
-        onContinue: () => _openStage2Intro(context),
-        onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 1 · Feedback scurt", continueLabel: "Continuă cu Personalitatea ta", onContinue: () => _openStage2Intro(context)),
+      builder: (context) => InsightFeedbackGate(
+        scope: 'module2_stage1',
+        moduleId: 'module2',
+        stage: 1,
+        loadingLabel: "Etapa 1 · Feedback scurt",
+        builder: (context, insight) => ModuleFeedbackSummaryScreen(
+          moduleLabel: "Etapa 1 · Feedback scurt",
+          title: "Profilul tău începe să se contureze",
+          description:
+              "Pe baza răspunsurilor tale, apar primele repere despre cum te raportezi la oameni, informații și decizii.",
+          profileLabel: insight != null ? insight.profileLabel : "Profil orientativ",
+          profileValue: insight != null ? insight.profileValue : "INFJ",
+          profileDescription: insight != null
+              ? insight.profileDescription
+              : "Răspunsurile tale sugerează un stil atent, orientat spre sens și conectat la ceea ce este important pentru tine.",
+          summaryItems: insight != null
+              ? insightToSummaryItems(insight)
+              : const [
+                  SummaryItem(
+                    icon: Icons.bolt_outlined,
+                    title: "Energie",
+                    description: "Pari să îți încarci energia în spații mai calme sau alături de oameni apropiați.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.lightbulb_outline,
+                    title: "Informații",
+                    description: "Îți poate fi mai natural să cauți sensul din spatele detaliilor.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.balance_outlined,
+                    title: "Decizii",
+                    description:
+                        "Când iei decizii, pari să ții cont atât de ce simți tu, cât și de impactul asupra celorlalți.",
+                  ),
+                ],
+          infoNote: "Acesta este un reper, nu o etichetă. Următoarele etape vor adăuga context.",
+          continueLabel: "Continuă cu Personalitatea ta",
+          chatLabel: "Discută feedbackul în Chat",
+          onContinue: () => _openStage2Intro(context),
+          onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 1 · Feedback scurt", continueLabel: "Continuă cu Personalitatea ta", onContinue: () => _openStage2Intro(context)),
+        ),
       ),
     ),
   );
@@ -289,6 +312,14 @@ void _openStage2Question(BuildContext context, int index) {
         questionNumber: index + 1,
         totalQuestions: _stage2PlaceholderStatements.length,
         onContinue: (selection) {
+          saveModuleAnswer(
+            'module2',
+            'stage2_q${index + 1}',
+            type: 'scale',
+            value: {'selectedIndex': selection},
+            stage: 2,
+            questionNumber: index + 1,
+          );
           if (index + 1 < _stage2PlaceholderStatements.length) {
             _openStage2Question(context, index + 1);
           } else {
@@ -325,48 +356,59 @@ void _openStage2Feedback(BuildContext context) {
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
-      builder: (context) => ModuleFeedbackSummaryScreen(
-        moduleLabel: "Etapa 2 · Feedback scurt",
-        title: "O privire asupra personalității tale",
-        description:
-            "Cele 5 dimensiuni te ajută să vezi cum îți iei energia, cum lucrezi, cum relaționezi și cum gestionezi schimbarea sau stresul.",
-        summaryItems: const [
-          SummaryItem(
-            icon: Icons.explore_outlined,
-            title: "Curiozitate",
-            description: "Pari atrasă de idei noi, perspective diferite și contexte în care poți explora.",
-            level: SummaryLevel.high,
-          ),
-          SummaryItem(
-            icon: Icons.checklist_outlined,
-            title: "Organizare",
-            description: "Îți poate fi mai ușor să funcționezi când ai structură, pași clari și obiective definite.",
-            level: SummaryLevel.medium,
-          ),
-          SummaryItem(
-            icon: Icons.bolt_outlined,
-            title: "Energie socială",
-            description: "Pari să îți încarci energia mai ales în spații calme sau alături de oameni apropiați.",
-            level: SummaryLevel.low,
-          ),
-          SummaryItem(
-            icon: Icons.handshake_outlined,
-            title: "Relaționare",
-            description: "Pari să pui preț pe cooperare, armonie și pe felul în care se simt cei din jur.",
-            level: SummaryLevel.high,
-          ),
-          SummaryItem(
-            icon: Icons.self_improvement_outlined,
-            title: "Echilibru emoțional",
-            description: "În perioade încărcate, poate fi util să îți acorzi timp ca să îți recapeți echilibrul.",
-            level: SummaryLevel.medium,
-          ),
-        ],
-        infoNote: "Aceste repere nu te definesc complet. Următoarele etape vor adăuga context.",
-        continueLabel: "Continuă cu Stilul cognitiv",
-        chatLabel: "Discută feedbackul în Chat",
-        onContinue: () => _openStage3Intro(context),
-        onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 2 · Feedback scurt", continueLabel: "Continuă cu Stilul cognitiv", onContinue: () => _openStage3Intro(context)),
+      builder: (context) => InsightFeedbackGate(
+        scope: 'module2_stage2',
+        moduleId: 'module2',
+        stage: 2,
+        loadingLabel: "Etapa 2 · Feedback scurt",
+        builder: (context, insight) => ModuleFeedbackSummaryScreen(
+          moduleLabel: "Etapa 2 · Feedback scurt",
+          title: "O privire asupra personalității tale",
+          description:
+              "Cele 5 dimensiuni te ajută să vezi cum îți iei energia, cum lucrezi, cum relaționezi și cum gestionezi schimbarea sau stresul.",
+          profileLabel: insight?.profileLabel,
+          profileValue: insight?.profileValue,
+          profileDescription: insight?.profileDescription,
+          summaryItems: insight != null
+              ? insightToSummaryItems(insight)
+              : const [
+                  SummaryItem(
+                    icon: Icons.explore_outlined,
+                    title: "Curiozitate",
+                    description: "Pari atrasă de idei noi, perspective diferite și contexte în care poți explora.",
+                    level: SummaryLevel.high,
+                  ),
+                  SummaryItem(
+                    icon: Icons.checklist_outlined,
+                    title: "Organizare",
+                    description: "Îți poate fi mai ușor să funcționezi când ai structură, pași clari și obiective definite.",
+                    level: SummaryLevel.medium,
+                  ),
+                  SummaryItem(
+                    icon: Icons.bolt_outlined,
+                    title: "Energie socială",
+                    description: "Pari să îți încarci energia mai ales în spații calme sau alături de oameni apropiați.",
+                    level: SummaryLevel.low,
+                  ),
+                  SummaryItem(
+                    icon: Icons.handshake_outlined,
+                    title: "Relaționare",
+                    description: "Pari să pui preț pe cooperare, armonie și pe felul în care se simt cei din jur.",
+                    level: SummaryLevel.high,
+                  ),
+                  SummaryItem(
+                    icon: Icons.self_improvement_outlined,
+                    title: "Echilibru emoțional",
+                    description: "În perioade încărcate, poate fi util să îți acorzi timp ca să îți recapeți echilibrul.",
+                    level: SummaryLevel.medium,
+                  ),
+                ],
+          infoNote: "Aceste repere nu te definesc complet. Următoarele etape vor adăuga context.",
+          continueLabel: "Continuă cu Stilul cognitiv",
+          chatLabel: "Discută feedbackul în Chat",
+          onContinue: () => _openStage3Intro(context),
+          onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 2 · Feedback scurt", continueLabel: "Continuă cu Stilul cognitiv", onContinue: () => _openStage3Intro(context)),
+        ),
       ),
     ),
   );
@@ -403,6 +445,14 @@ void _openStage3Question(BuildContext context, int index) {
         questionNumber: index + 1,
         totalQuestions: _stage3PlaceholderStatements.length,
         onContinue: (selection) {
+          saveModuleAnswer(
+            'module2',
+            'stage3_q${index + 1}',
+            type: 'scale',
+            value: {'selectedIndex': selection},
+            stage: 3,
+            questionNumber: index + 1,
+          );
           if (index + 1 < _stage3PlaceholderStatements.length) {
             _openStage3Question(context, index + 1);
           } else {
@@ -439,47 +489,58 @@ void _openStage3Feedback(BuildContext context) {
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
-      builder: (context) => ModuleFeedbackSummaryScreen(
-        moduleLabel: "Etapa 3 · Feedback scurt",
-        title: "Stilul tău de gândire începe să se clarifice",
-        description: "Răspunsurile tale arată câteva indicii despre cum înveți, analizezi și abordezi problemele.",
-        summaryItems: const [
-          SummaryItem(
-            icon: Icons.visibility_outlined,
-            title: "Perspectiva ta",
-            description: "Pari să cauți sensul general înainte să intri în detalii.",
-            badgeLabel: "Ansamblu",
-          ),
-          SummaryItem(
-            icon: Icons.psychology_outlined,
-            title: "Cum analizezi",
-            description: "Îți poate fi util să înțelegi logica din spatele unei situații înainte să alegi.",
-            badgeLabel: "Analitic",
-          ),
-          SummaryItem(
-            icon: Icons.handyman_outlined,
-            title: "Aplicare practică",
-            description: "Poți avea nevoie să vezi cum se leagă ideile de situații concrete.",
-            badgeLabel: "Mixt",
-          ),
-          SummaryItem(
-            icon: Icons.hourglass_empty_outlined,
-            title: "Ritmul tău",
-            description: "Pari să preferi puțin timp pentru a așeza informațiile înainte să răspunzi.",
-            badgeLabel: "Reflectiv",
-          ),
-          SummaryItem(
-            icon: Icons.grid_view_outlined,
-            title: "Structură",
-            description: "Îți poate fi mai ușor să lucrezi când ai pași clari și repere stabile.",
-            badgeLabel: "Structurat",
-          ),
-        ],
-        infoNote: "Acest feedback descrie un stil, nu o măsură a inteligenței. Următoarele etape vor adăuga context.",
-        continueLabel: "Continuă cu Stilul decizional",
-        chatLabel: "Discută feedbackul în Chat",
-        onContinue: () => _openStage4Intro(context),
-        onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 3 · Feedback scurt", continueLabel: "Continuă cu Stilul decizional", onContinue: () => _openStage4Intro(context)),
+      builder: (context) => InsightFeedbackGate(
+        scope: 'module2_stage3',
+        moduleId: 'module2',
+        stage: 3,
+        loadingLabel: "Etapa 3 · Feedback scurt",
+        builder: (context, insight) => ModuleFeedbackSummaryScreen(
+          moduleLabel: "Etapa 3 · Feedback scurt",
+          title: "Stilul tău de gândire începe să se clarifice",
+          description: "Răspunsurile tale arată câteva indicii despre cum înveți, analizezi și abordezi problemele.",
+          profileLabel: insight?.profileLabel,
+          profileValue: insight?.profileValue,
+          profileDescription: insight?.profileDescription,
+          summaryItems: insight != null
+              ? insightToSummaryItems(insight)
+              : const [
+                  SummaryItem(
+                    icon: Icons.visibility_outlined,
+                    title: "Perspectiva ta",
+                    description: "Pari să cauți sensul general înainte să intri în detalii.",
+                    badgeLabel: "Ansamblu",
+                  ),
+                  SummaryItem(
+                    icon: Icons.psychology_outlined,
+                    title: "Cum analizezi",
+                    description: "Îți poate fi util să înțelegi logica din spatele unei situații înainte să alegi.",
+                    badgeLabel: "Analitic",
+                  ),
+                  SummaryItem(
+                    icon: Icons.handyman_outlined,
+                    title: "Aplicare practică",
+                    description: "Poți avea nevoie să vezi cum se leagă ideile de situații concrete.",
+                    badgeLabel: "Mixt",
+                  ),
+                  SummaryItem(
+                    icon: Icons.hourglass_empty_outlined,
+                    title: "Ritmul tău",
+                    description: "Pari să preferi puțin timp pentru a așeza informațiile înainte să răspunzi.",
+                    badgeLabel: "Reflectiv",
+                  ),
+                  SummaryItem(
+                    icon: Icons.grid_view_outlined,
+                    title: "Structură",
+                    description: "Îți poate fi mai ușor să lucrezi când ai pași clari și repere stabile.",
+                    badgeLabel: "Structurat",
+                  ),
+                ],
+          infoNote: "Acest feedback descrie un stil, nu o măsură a inteligenței. Următoarele etape vor adăuga context.",
+          continueLabel: "Continuă cu Stilul decizional",
+          chatLabel: "Discută feedbackul în Chat",
+          onContinue: () => _openStage4Intro(context),
+          onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 3 · Feedback scurt", continueLabel: "Continuă cu Stilul decizional", onContinue: () => _openStage4Intro(context)),
+        ),
       ),
     ),
   );
@@ -517,6 +578,14 @@ void _openStage4Question(BuildContext context, int index) {
         questionNumber: index + 1,
         totalQuestions: _stage4PlaceholderStatements.length,
         onContinue: (selection) {
+          saveModuleAnswer(
+            'module2',
+            'stage4_q${index + 1}',
+            type: 'scale',
+            value: {'selectedIndex': selection},
+            stage: 4,
+            questionNumber: index + 1,
+          );
           if (index + 1 < _stage4PlaceholderStatements.length) {
             _openStage4Question(context, index + 1);
           } else {
@@ -553,46 +622,55 @@ void _openStage4Feedback(BuildContext context) {
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
-      builder: (context) => ModuleFeedbackSummaryScreen(
-        moduleLabel: "Etapa 4 · Feedback scurt",
-        title: "Stilul tău decizional se conturează",
-        description: "Răspunsurile tale sugerează ce stil apare mai des atunci când ai de luat o decizie.",
-        profileLabel: "Stil decizional orientativ",
-        profileValue: "Analitic",
-        profileDescription:
-            "Alegi mai ușor când ai timp să înțelegi opțiunile, să compari argumentele și să vezi clar consecințele.",
-        summaryItems: const [
-          SummaryItem(
-            icon: Icons.query_stats_outlined,
-            title: "Analiză",
-            description: "Tinzi să cântărești opțiunile și să cauți argumente clare înainte să alegi.",
-          ),
-          SummaryItem(
-            icon: Icons.auto_awesome_outlined,
-            title: "Intuiție",
-            description: "Uneori contează și ce simți că este potrivit, dar nu pare să fie singurul criteriu.",
-          ),
-          SummaryItem(
-            icon: Icons.groups_outlined,
-            title: "Sprijin",
-            description: "Poți lua în calcul părerea celor din jur, mai ales când decizia contează.",
-          ),
-          SummaryItem(
-            icon: Icons.hourglass_empty_outlined,
-            title: "Ritmul tău",
-            description: "Pari să preferi un ritm mai așezat, în care decizia are timp să devină clară.",
-          ),
-          SummaryItem(
-            icon: Icons.pause_circle_outlined,
-            title: "Amânare",
-            description: "Nu apare ca tendință principală, dar poate apărea când o alegere se simte apăsătoare.",
-          ),
-        ],
-        infoNote: "Acest feedback descrie un stil, nu o etichetă fixă. Următoarea etapă va adăuga context emoțional.",
-        continueLabel: "Continuă cu Tiparele emoționale",
-        chatLabel: "Discută feedbackul în Chat",
-        onContinue: () => _openStage5Intro(context),
-        onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 4 · Feedback scurt", continueLabel: "Continuă cu Tiparele emoționale", onContinue: () => _openStage5Intro(context)),
+      builder: (context) => InsightFeedbackGate(
+        scope: 'module2_stage4',
+        moduleId: 'module2',
+        stage: 4,
+        loadingLabel: "Etapa 4 · Feedback scurt",
+        builder: (context, insight) => ModuleFeedbackSummaryScreen(
+          moduleLabel: "Etapa 4 · Feedback scurt",
+          title: "Stilul tău decizional se conturează",
+          description: "Răspunsurile tale sugerează ce stil apare mai des atunci când ai de luat o decizie.",
+          profileLabel: insight != null ? insight.profileLabel : "Stil decizional orientativ",
+          profileValue: insight != null ? insight.profileValue : "Analitic",
+          profileDescription: insight != null
+              ? insight.profileDescription
+              : "Alegi mai ușor când ai timp să înțelegi opțiunile, să compari argumentele și să vezi clar consecințele.",
+          summaryItems: insight != null
+              ? insightToSummaryItems(insight)
+              : const [
+                  SummaryItem(
+                    icon: Icons.query_stats_outlined,
+                    title: "Analiză",
+                    description: "Tinzi să cântărești opțiunile și să cauți argumente clare înainte să alegi.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.auto_awesome_outlined,
+                    title: "Intuiție",
+                    description: "Uneori contează și ce simți că este potrivit, dar nu pare să fie singurul criteriu.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.groups_outlined,
+                    title: "Sprijin",
+                    description: "Poți lua în calcul părerea celor din jur, mai ales când decizia contează.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.hourglass_empty_outlined,
+                    title: "Ritmul tău",
+                    description: "Pari să preferi un ritm mai așezat, în care decizia are timp să devină clară.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.pause_circle_outlined,
+                    title: "Amânare",
+                    description: "Nu apare ca tendință principală, dar poate apărea când o alegere se simte apăsătoare.",
+                  ),
+                ],
+          infoNote: "Acest feedback descrie un stil, nu o etichetă fixă. Următoarea etapă va adăuga context emoțional.",
+          continueLabel: "Continuă cu Tiparele emoționale",
+          chatLabel: "Discută feedbackul în Chat",
+          onContinue: () => _openStage5Intro(context),
+          onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 4 · Feedback scurt", continueLabel: "Continuă cu Tiparele emoționale", onContinue: () => _openStage5Intro(context)),
+        ),
       ),
     ),
   );
@@ -629,6 +707,14 @@ void _openStage5Question(BuildContext context, int index) {
         questionNumber: index + 1,
         totalQuestions: _stage5PlaceholderStatements.length,
         onContinue: (selection) {
+          saveModuleAnswer(
+            'module2',
+            'stage5_q${index + 1}',
+            type: 'scale',
+            value: {'selectedIndex': selection},
+            stage: 5,
+            questionNumber: index + 1,
+          );
           if (index + 1 < _stage5PlaceholderStatements.length) {
             _openStage5Question(context, index + 1);
           } else {
@@ -665,44 +751,55 @@ void _openStage5Feedback(BuildContext context) {
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
-      builder: (context) => ModuleFeedbackSummaryScreen(
-        moduleLabel: "Etapa 5 · Feedback scurt",
-        title: "Cum reacționezi în momente solicitante",
-        description:
-            "Răspunsurile tale sugerează câteva repere despre ce te poate tensiona, ce îți poate scădea claritatea și ce te ajută să îți revii.",
-        summaryItems: const [
-          SummaryItem(
-            icon: Icons.layers_outlined,
-            title: "Când se adună prea multe",
-            description: "Poți simți presiunea mai puternic atunci când sunt multe lucruri de dus sau când nu e clar ce urmează.",
-          ),
-          SummaryItem(
-            icon: Icons.help_outline,
-            title: "Încrederea în tine",
-            description: "În unele momente, îndoiala poate apărea mai ușor, mai ales când simți că trebuie să alegi bine din prima.",
-          ),
-          SummaryItem(
-            icon: Icons.sentiment_dissatisfied_outlined,
-            title: "Când ceva nu iese cum ai vrut",
-            description: "Poate fi mai greu să rămâi blând(ă) cu tine atunci când rezultatul nu iese cum sperai.",
-          ),
-          SummaryItem(
-            icon: Icons.favorite_outline,
-            title: "Ce te ajută",
-            description:
-                "Pentru tine, lucrurile pot deveni mai ușor de dus când ai timp, claritate și un spațiu în care nu te simți judecat(ă).",
-          ),
-          SummaryItem(
-            icon: Icons.bolt_outlined,
-            title: "Sub presiune",
-            description: "Presiunea nu pare să te ajute mereu să vezi lucrurile mai clar. Uneori, ai nevoie mai întâi să te oprești puțin.",
-          ),
-        ],
-        infoNote: "Acesta nu este un verdict despre tine. Este doar o imagine a felului în care reacționezi acum, în anumite momente.",
-        continueLabel: "Continuă cu Controlul perceput",
-        chatLabel: "Discută feedbackul în Chat",
-        onContinue: () => _openStage6Intro(context),
-        onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 5 · Feedback scurt", continueLabel: "Continuă cu Controlul perceput", onContinue: () => _openStage6Intro(context)),
+      builder: (context) => InsightFeedbackGate(
+        scope: 'module2_stage5',
+        moduleId: 'module2',
+        stage: 5,
+        loadingLabel: "Etapa 5 · Feedback scurt",
+        builder: (context, insight) => ModuleFeedbackSummaryScreen(
+          moduleLabel: "Etapa 5 · Feedback scurt",
+          title: "Cum reacționezi în momente solicitante",
+          description:
+              "Răspunsurile tale sugerează câteva repere despre ce te poate tensiona, ce îți poate scădea claritatea și ce te ajută să îți revii.",
+          profileLabel: insight?.profileLabel,
+          profileValue: insight?.profileValue,
+          profileDescription: insight?.profileDescription,
+          summaryItems: insight != null
+              ? insightToSummaryItems(insight)
+              : const [
+                  SummaryItem(
+                    icon: Icons.layers_outlined,
+                    title: "Când se adună prea multe",
+                    description: "Poți simți presiunea mai puternic atunci când sunt multe lucruri de dus sau când nu e clar ce urmează.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.help_outline,
+                    title: "Încrederea în tine",
+                    description: "În unele momente, îndoiala poate apărea mai ușor, mai ales când simți că trebuie să alegi bine din prima.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.sentiment_dissatisfied_outlined,
+                    title: "Când ceva nu iese cum ai vrut",
+                    description: "Poate fi mai greu să rămâi blând(ă) cu tine atunci când rezultatul nu iese cum sperai.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.favorite_outline,
+                    title: "Ce te ajută",
+                    description:
+                        "Pentru tine, lucrurile pot deveni mai ușor de dus când ai timp, claritate și un spațiu în care nu te simți judecat(ă).",
+                  ),
+                  SummaryItem(
+                    icon: Icons.bolt_outlined,
+                    title: "Sub presiune",
+                    description: "Presiunea nu pare să te ajute mereu să vezi lucrurile mai clar. Uneori, ai nevoie mai întâi să te oprești puțin.",
+                  ),
+                ],
+          infoNote: "Acesta nu este un verdict despre tine. Este doar o imagine a felului în care reacționezi acum, în anumite momente.",
+          continueLabel: "Continuă cu Controlul perceput",
+          chatLabel: "Discută feedbackul în Chat",
+          onContinue: () => _openStage6Intro(context),
+          onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 5 · Feedback scurt", continueLabel: "Continuă cu Controlul perceput", onContinue: () => _openStage6Intro(context)),
+        ),
       ),
     ),
   );
@@ -741,6 +838,14 @@ void _openStage6Question(BuildContext context, int index) {
         questionNumber: index + 1,
         totalQuestions: _stage6PlaceholderStatements.length,
         onContinue: (selection) {
+          saveModuleAnswer(
+            'module2',
+            'stage6_q${index + 1}',
+            type: 'scale',
+            value: {'selectedIndex': selection},
+            stage: 6,
+            questionNumber: index + 1,
+          );
           if (index + 1 < _stage6PlaceholderStatements.length) {
             _openStage6Question(context, index + 1);
           } else {
@@ -777,38 +882,47 @@ void _openStage6Feedback(BuildContext context) {
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
-      builder: (context) => ModuleFeedbackSummaryScreen(
-        moduleLabel: "Etapa 6 · Feedback scurt",
-        title: "Ce simți că poți influența",
-        description:
-            "Răspunsurile tale arată cum vezi lucrurile din jurul tău: ce simți că poți schimba prin alegerile tale și ce pare să depindă mai mult de context.",
-        profileLabel: "Profil orientativ",
-        profileValue: "Echilibru realist",
-        profileDescription:
-            "Pari să vezi că alegerile tale pot conta, chiar dacă unele lucruri țin și de context. Te poate ajuta să observi ce pas concret depinde de tine acum, fără să simți că trebuie să controlezi totul.",
-        summaryItems: const [
-          SummaryItem(
-            icon: Icons.trending_up_outlined,
-            title: "Ce ține de tine",
-            description: "În multe situații, pașii mici pot conta mai mult decât pare la început. O alegere repetată în timp poate schimba direcția.",
-          ),
-          SummaryItem(
-            icon: Icons.public_outlined,
-            title: "Ce nu ține doar de tine",
-            description:
-                "Unele lucruri au nevoie de timp, sprijin sau un context mai potrivit. Asta nu înseamnă că nu poți face nimic, ci că nu totul se rezolvă doar prin voință.",
-          ),
-          SummaryItem(
-            icon: Icons.handshake_outlined,
-            title: "Ce te ajută",
-            description: "Te poate ajuta să separi lucrurile simplu: ce poți face acum, unde poți cere sprijin și ce poate aștepta.",
-          ),
-        ],
-        infoNote: "Nu trebuie să controlezi tot drumul. Uneori e suficient să vezi următorul pas care depinde de tine.",
-        continueLabel: "Vezi ce ai conturat în Modulul 2",
-        chatLabel: "Discută feedbackul în Chat",
-        onContinue: () => _openModule2FinalFeedback(context),
-        onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 6 · Feedback scurt", continueLabel: "Vezi ce ai conturat în Modulul 2", onContinue: () => _openModule2FinalFeedback(context)),
+      builder: (context) => InsightFeedbackGate(
+        scope: 'module2_stage6',
+        moduleId: 'module2',
+        stage: 6,
+        loadingLabel: "Etapa 6 · Feedback scurt",
+        builder: (context, insight) => ModuleFeedbackSummaryScreen(
+          moduleLabel: "Etapa 6 · Feedback scurt",
+          title: "Ce simți că poți influența",
+          description:
+              "Răspunsurile tale arată cum vezi lucrurile din jurul tău: ce simți că poți schimba prin alegerile tale și ce pare să depindă mai mult de context.",
+          profileLabel: insight != null ? insight.profileLabel : "Profil orientativ",
+          profileValue: insight != null ? insight.profileValue : "Echilibru realist",
+          profileDescription: insight != null
+              ? insight.profileDescription
+              : "Pari să vezi că alegerile tale pot conta, chiar dacă unele lucruri țin și de context. Te poate ajuta să observi ce pas concret depinde de tine acum, fără să simți că trebuie să controlezi totul.",
+          summaryItems: insight != null
+              ? insightToSummaryItems(insight)
+              : const [
+                  SummaryItem(
+                    icon: Icons.trending_up_outlined,
+                    title: "Ce ține de tine",
+                    description: "În multe situații, pașii mici pot conta mai mult decât pare la început. O alegere repetată în timp poate schimba direcția.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.public_outlined,
+                    title: "Ce nu ține doar de tine",
+                    description:
+                        "Unele lucruri au nevoie de timp, sprijin sau un context mai potrivit. Asta nu înseamnă că nu poți face nimic, ci că nu totul se rezolvă doar prin voință.",
+                  ),
+                  SummaryItem(
+                    icon: Icons.handshake_outlined,
+                    title: "Ce te ajută",
+                    description: "Te poate ajuta să separi lucrurile simplu: ce poți face acum, unde poți cere sprijin și ce poate aștepta.",
+                  ),
+                ],
+          infoNote: "Nu trebuie să controlezi tot drumul. Uneori e suficient să vezi următorul pas care depinde de tine.",
+          continueLabel: "Vezi ce ai conturat în Modulul 2",
+          chatLabel: "Discută feedbackul în Chat",
+          onContinue: () => _openModule2FinalFeedback(context),
+          onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 6 · Feedback scurt", continueLabel: "Vezi ce ai conturat în Modulul 2", onContinue: () => _openModule2FinalFeedback(context)),
+        ),
       ),
     ),
   );
@@ -818,37 +932,44 @@ void _openModule2FinalFeedback(BuildContext context) {
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
-      builder: (context) => ModuleFinalFeedbackScreen(
-        moduleLabel: "Modulul 2 · Imagine de ansamblu",
-        title: "Ce ai înțeles despre tine în Modulul 2",
-        description:
-            "Cele 6 etape au privit lucrurile din unghiuri diferite. Împreună, ele arată cum gândești, cum alegi și ce ai nevoie ca să vezi mai clar direcția ta.",
-        synthesisTitle: "Ce se conturează când le privim împreună",
-        synthesisDescription:
-            "Se conturează un mod atent de a privi lucrurile, orientat spre sens și claritate. Pari să ai nevoie ca alegerile să aibă logică pentru tine, nu doar să pară corecte din exterior.",
-        connectionsTitle: "Cum se leagă între ele",
-        connections: const [
-          ConnectionItem(
-            icon: Icons.lightbulb_outline,
-            title: "Când înțelegi sensul",
-            description: "Te poți implica mai ușor când vezi de ce contează o alegere pentru tine și cum se leagă de ce îți dorești.",
-          ),
-          ConnectionItem(
-            icon: Icons.compress_outlined,
-            title: "Când presiunea crește",
-            description: "Poți avea nevoie de timp, repere și claritate ca să alegi cu mai multă încredere.",
-          ),
-          ConnectionItem(
-            icon: Icons.arrow_forward_outlined,
-            title: "Când vezi următorul pas",
-            description: "Nu trebuie să controlezi totul ca să mergi mai departe. Uneori ajută să vezi ce pas mic depinde de tine acum.",
-          ),
-        ],
-        infoNote: "Aceste repere ne ajută, în următoarele module, să legăm felul în care funcționezi de interesele, aptitudinile și direcțiile potrivite pentru tine.",
-        continueLabel: "Ascultă mesajul pentru tine",
-        chatLabel: "Discută Modulul 2 în Chat",
-        onContinue: () => _openModule2Complete(context),
-        onChat: () => openChat(context, contextLabel: "Modulul 2 · Imagine de ansamblu", continueLabel: "Ascultă mesajul pentru tine", onContinue: () => _openModule2Complete(context)),
+      builder: (context) => InsightFeedbackGate(
+        scope: 'module2_final',
+        moduleId: 'module2',
+        loadingLabel: "Modulul 2 · Imagine de ansamblu",
+        builder: (context, insight) => ModuleFinalFeedbackScreen(
+          moduleLabel: "Modulul 2 · Imagine de ansamblu",
+          title: "Ce ai înțeles despre tine în Modulul 2",
+          description:
+              "Cele 6 etape au privit lucrurile din unghiuri diferite. Împreună, ele arată cum gândești, cum alegi și ce ai nevoie ca să vezi mai clar direcția ta.",
+          synthesisTitle: "Ce se conturează când le privim împreună",
+          synthesisDescription: insight?.profileDescription ??
+              "Se conturează un mod atent de a privi lucrurile, orientat spre sens și claritate. Pari să ai nevoie ca alegerile să aibă logică pentru tine, nu doar să pară corecte din exterior.",
+          connectionsTitle: "Cum se leagă între ele",
+          connections: insight != null && insight.items.isNotEmpty
+              ? insightToConnectionItems(insight)
+              : const [
+                  ConnectionItem(
+                    icon: Icons.lightbulb_outline,
+                    title: "Când înțelegi sensul",
+                    description: "Te poți implica mai ușor când vezi de ce contează o alegere pentru tine și cum se leagă de ce îți dorești.",
+                  ),
+                  ConnectionItem(
+                    icon: Icons.compress_outlined,
+                    title: "Când presiunea crește",
+                    description: "Poți avea nevoie de timp, repere și claritate ca să alegi cu mai multă încredere.",
+                  ),
+                  ConnectionItem(
+                    icon: Icons.arrow_forward_outlined,
+                    title: "Când vezi următorul pas",
+                    description: "Nu trebuie să controlezi totul ca să mergi mai departe. Uneori ajută să vezi ce pas mic depinde de tine acum.",
+                  ),
+                ],
+          infoNote: "Aceste repere ne ajută, în următoarele module, să legăm felul în care funcționezi de interesele, aptitudinile și direcțiile potrivite pentru tine.",
+          continueLabel: "Ascultă mesajul pentru tine",
+          chatLabel: "Discută Modulul 2 în Chat",
+          onContinue: () => _openModule2Complete(context),
+          onChat: () => openChat(context, contextLabel: "Modulul 2 · Imagine de ansamblu", continueLabel: "Ascultă mesajul pentru tine", onContinue: () => _openModule2Complete(context)),
+        ),
       ),
     ),
   );

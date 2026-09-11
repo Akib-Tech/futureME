@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:futureme/core/data/consent_repository.dart';
+import 'package:futureme/core/di/injectable_init.dart';
 import 'package:futureme/core/theme/app_colors.dart';
+import 'package:futureme/feature/authentication/pending_signup_data.dart';
 import 'package:futureme/feature/consent/send_email_consent.dart';
 import 'package:futureme/shared/widgets/app_text_field.dart';
 import 'package:futureme/shared/widgets/center_text.dart';
@@ -21,14 +24,50 @@ class EmailConsent extends StatefulWidget{
 
 class EmailConsentState extends State<EmailConsent>{
 
+    final _parentEmailController = TextEditingController();
+    bool _isSending = false;
 
     void goToNextPage(Widget nextPage){
       Navigator.push(context,MaterialPageRoute(builder: (context) => nextPage ));
     }
 
+    Future<void> _sendConsentRequest() async {
+      if (_isSending) return;
+      final parentEmail = _parentEmailController.text.trim();
+      if (!parentEmail.contains('@') || !parentEmail.contains('.')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Introdu o adresă de email validă pentru părinte/tutore.')),
+        );
+        return;
+      }
+
+      setState(() => _isSending = true);
+      try {
+        final requestId = await getIt<ConsentRepository>().requestConsent(parentEmail: parentEmail);
+        PendingSignupData.parentEmail = parentEmail;
+        PendingSignupData.consentRequestId = requestId;
+        PendingSignupData.consentRequestedAt = DateTime.now();
+        if (!mounted) return;
+        goToNextPage(SendEmailConsent());
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nu am putut trimite cererea. Încearcă din nou.')),
+        );
+      } finally {
+        if (mounted) setState(() => _isSending = false);
+      }
+    }
+
     @override
     void initState(){
       super.initState();
+    }
+
+    @override
+    void dispose(){
+      _parentEmailController.dispose();
+      super.dispose();
     }
 
     @override
@@ -55,7 +94,7 @@ class EmailConsentState extends State<EmailConsent>{
                         const SizedBox(height: 8),
                         RoundedCard(
                           contents: [
-                            AppTextField(hintText: "exemplu@email.com")
+                            AppTextField(hintText: "exemplu@email.com", controller: _parentEmailController, keyboardType: TextInputType.emailAddress)
                           ]
                         ),
                         const SizedBox(height: 4),
@@ -69,9 +108,10 @@ class EmailConsentState extends State<EmailConsent>{
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                   child: Column(
                     children: [
-                      PrimaryButton(content: "Trimite cererea", onpressed: (){
-                        goToNextPage(SendEmailConsent());
-                      }),
+                      PrimaryButton(
+                        content: _isSending ? "Se trimite..." : "Trimite cererea",
+                        onpressed: _isSending ? null : _sendConsentRequest,
+                      ),
                       const SizedBox(height: 8),
                       TagButton(content: "Revin mai târziu", onTap: () => Navigator.pop(context)),
                     ],

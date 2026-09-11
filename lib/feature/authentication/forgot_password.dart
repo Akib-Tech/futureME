@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:futureme/core/auth/auth_service.dart';
+import 'package:futureme/core/data/user_repository.dart';
+import 'package:futureme/core/di/injectable_init.dart';
 import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/feature/onboarding/function_video.dart';
 import 'package:futureme/shared/widgets/center_text.dart';
@@ -21,14 +24,31 @@ class ForgotPassword extends StatefulWidget{
 
 class ForgotPasswordState extends State<ForgotPassword>{
 
+    final _firstNameController = TextEditingController();
 
     void goToNextPage(Widget? nextPage){
       Navigator.push(context,MaterialPageRoute(builder: (context) => nextPage! ));
     }
 
+    Future<void> _saveNameAndContinue() async {
+      final name = _firstNameController.text.trim();
+      final uid = getIt<AuthService>().currentUser?.uid;
+      if (name.isNotEmpty && uid != null) {
+        await getIt<UserRepository>().updateDisplayName(uid, name);
+      }
+      if (!mounted) return;
+      goToNextPage(FunctionVideo());
+    }
+
     @override
     void initState(){
       super.initState();
+    }
+
+    @override
+    void dispose(){
+      _firstNameController.dispose();
+      super.dispose();
     }
 
     @override
@@ -53,7 +73,7 @@ class ForgotPasswordState extends State<ForgotPassword>{
                           LeftBoldText(content: "Prenume"),
                           const SizedBox(height:8),
                           RoundedCard(contents: [
-                            AppTextField(hintText: "Ex. Andreea"),
+                            AppTextField(hintText: "Ex. Andreea", controller: _firstNameController),
                           ]),
                           const SizedBox(height:8),
                           LeftLightText(content:"Îl poți schimba oricând din contul tău."),
@@ -64,9 +84,7 @@ class ForgotPasswordState extends State<ForgotPassword>{
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                  child: PrimaryButton(content: "Continuă", onpressed: (){
-                    goToNextPage(FunctionVideo());
-                  }),
+                  child: PrimaryButton(content: "Continuă", onpressed: _saveNameAndContinue),
                 ),
               ],
             ),

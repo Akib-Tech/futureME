@@ -59,6 +59,8 @@ class ConfirmConsentState extends State<ConfirmConsent>{
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                   child: PrimaryButton(content: "Continuă", onpressed: (){
+                    // consentConfirmedAt is already set (from the server) by
+                    // SendEmailConsent once the parent's confirmation was verified.
                     goToNextPage(LoginPage());
                   }),
                 ),

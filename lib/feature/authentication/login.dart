@@ -1,11 +1,16 @@
+import 'dart:io' show Platform;
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:futureme/core/auth/auth_service.dart';
 import 'package:futureme/core/constants/assets.dart';
+import 'package:futureme/core/data/user_repository.dart';
 import 'package:futureme/core/di/injectable_init.dart';
 import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/feature/authentication/forgot_password.dart';
 import 'package:futureme/feature/authentication/sign_in_screen.dart';
+import 'package:futureme/feature/dashboard/dashboard_navigation.dart';
 import 'package:futureme/shared/widgets/app_text_field.dart';
 import 'package:futureme/shared/widgets/center_text.dart';
 import 'package:futureme/shared/widgets/custom_app_bar.dart';
@@ -31,6 +36,8 @@ class LoginPageState extends State<LoginPage>{
     final _emailController = TextEditingController();
     final _passwordController = TextEditingController();
     bool _isLoading = false;
+    bool _isGoogleLoading = false;
+    bool _isAppleLoading = false;
 
     void goToNextPage(Widget? nextPage){
       Navigator.push(context,MaterialPageRoute(builder: (context) => nextPage! ));
@@ -51,6 +58,52 @@ class LoginPageState extends State<LoginPage>{
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(authErrorMessage(e))));
       } finally {
         if (mounted) setState(() => _isLoading = false);
+      }
+    }
+
+    Future<void> _completeSocialSignIn(UserCredential? credential) async {
+      if (credential?.user == null) return;
+      final isNewUser = credential!.additionalUserInfo?.isNewUser ?? false;
+      await getIt<UserRepository>().createOrUpdateProfileOnSignIn(credential.user!, isNewUser: isNewUser);
+      if (!mounted) return;
+      if (isNewUser) {
+        goToNextPage(ForgotPassword());
+      } else {
+        goToDashboard(context);
+      }
+    }
+
+    Future<void> _signInWithGoogle() async {
+      if (_isGoogleLoading || _isAppleLoading) return;
+      setState(() => _isGoogleLoading = true);
+      try {
+        final credential = await getIt<AuthService>().signInWithGoogle();
+        await _completeSocialSignIn(credential);
+      } on FirebaseAuthException catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(authErrorMessage(e))));
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nu am putut continua cu Google. Încearcă din nou.')));
+      } finally {
+        if (mounted) setState(() => _isGoogleLoading = false);
+      }
+    }
+
+    Future<void> _signInWithApple() async {
+      if (_isGoogleLoading || _isAppleLoading) return;
+      setState(() => _isAppleLoading = true);
+      try {
+        final credential = await getIt<AuthService>().signInWithApple();
+        await _completeSocialSignIn(credential);
+      } on FirebaseAuthException catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(authErrorMessage(e))));
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nu am putut continua cu Apple. Încearcă din nou.')));
+      } finally {
+        if (mounted) setState(() => _isAppleLoading = false);
       }
     }
 
@@ -107,12 +160,18 @@ class LoginPageState extends State<LoginPage>{
                         SocialSignInButton(
                           icon: AppAssets.googleIcon,
                           label: "Continuă cu Google",
+                          isLoading: _isGoogleLoading,
+                          onPressed: _signInWithGoogle,
                         ),
-                        const SizedBox(height: 16),
-                        SocialSignInButton(
-                          icon: AppAssets.appleIcon,
-                          label: "Continuă cu Apple",
-                        ),
+                        if (!kIsWeb && Platform.isIOS) ...[
+                          const SizedBox(height: 16),
+                          SocialSignInButton(
+                            icon: AppAssets.appleIcon,
+                            label: "Continuă cu Apple",
+                            isLoading: _isAppleLoading,
+                            onPressed: _signInWithApple,
+                          ),
+                        ],
                         const SizedBox(height: 6),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,

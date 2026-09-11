@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/core/theme/app_fonts.dart';
@@ -23,6 +25,7 @@ class ModuleQuestionScreen extends StatefulWidget {
     this.tipsTitle,
     this.tips,
     this.buttonPinned = true,
+    this.onAutosave,
   });
 
   final int questionNumber;
@@ -46,12 +49,17 @@ class ModuleQuestionScreen extends StatefulWidget {
 
   final ValueChanged<String> onContinue;
 
+  /// Debounced (~600ms after typing stops) autosave hook for the in-progress
+  /// answer, matching the "Răspunsul tău se salvează automat" copy below.
+  final ValueChanged<String>? onAutosave;
+
   @override
   State<ModuleQuestionScreen> createState() => _ModuleQuestionScreenState();
 }
 
 class _ModuleQuestionScreenState extends State<ModuleQuestionScreen> {
   late final TextEditingController _controller;
+  Timer? _autosaveTimer;
 
   @override
   void initState() {
@@ -61,8 +69,18 @@ class _ModuleQuestionScreenState extends State<ModuleQuestionScreen> {
 
   @override
   void dispose() {
+    _autosaveTimer?.cancel();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _scheduleAutosave() {
+    if (widget.onAutosave == null) return;
+    _autosaveTimer?.cancel();
+    _autosaveTimer = Timer(const Duration(milliseconds: 600), () {
+      final text = _controller.text.trim();
+      if (text.isNotEmpty) widget.onAutosave!(text);
+    });
   }
 
   @override
@@ -176,7 +194,10 @@ class _ModuleQuestionScreenState extends State<ModuleQuestionScreen> {
                         maxLines: null,
                         expands: true,
                         textAlignVertical: TextAlignVertical.top,
-                        onChanged: (_) => setState(() {}),
+                        onChanged: (_) {
+                          setState(() {});
+                          _scheduleAutosave();
+                        },
                         decoration: InputDecoration(
                           border: InputBorder.none,
                           hintText: widget.placeholder,

@@ -1,11 +1,20 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:injectable/injectable.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:futureme/core/auth/social_auth_config.dart';
 
 @lazySingleton
 class AuthService {
   AuthService(this._firebaseAuth);
 
   final FirebaseAuth _firebaseAuth;
+  bool _googleSignInInitialized = false;
 
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
@@ -36,6 +45,56 @@ class AuthService {
   }
 
   Future<void> signOut() => _firebaseAuth.signOut();
+
+  Future<void> _ensureGoogleSignInInitialized() async {
+    if (_googleSignInInitialized) return;
+    await GoogleSignIn.instance.initialize(
+      serverClientId: SocialAuthConfig.androidServerClientId,
+      clientId: defaultTargetPlatform == TargetPlatform.iOS ? SocialAuthConfig.iosClientId : null,
+    );
+    _googleSignInInitialized = true;
+  }
+
+  /// Returns `null` if the user cancels the Google account picker.
+  Future<UserCredential?> signInWithGoogle() async {
+    await _ensureGoogleSignInInitialized();
+    try {
+      final googleUser = await GoogleSignIn.instance.authenticate();
+      final idToken = googleUser.authentication.idToken;
+      final credential = GoogleAuthProvider.credential(idToken: idToken);
+      return await _firebaseAuth.signInWithCredential(credential);
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) return null;
+      rethrow;
+    }
+  }
+
+  /// iOS/macOS only — see [SocialAuthConfig] docs for why Android isn't
+  /// supported. Callers must guard with `Platform.isIOS` before showing the
+  /// Apple button.
+  Future<UserCredential> signInWithApple() async {
+    final rawNonce = _generateNonce();
+    final hashedNonce = _sha256(rawNonce);
+
+    final appleCredential = await SignInWithApple.getAppleIDCredential(
+      scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
+      nonce: hashedNonce,
+    );
+
+    final oauthCredential = OAuthProvider(
+      'apple.com',
+    ).credential(idToken: appleCredential.identityToken, rawNonce: rawNonce);
+
+    return _firebaseAuth.signInWithCredential(oauthCredential);
+  }
+
+  String _generateNonce([int length = 32]) {
+    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+  }
+
+  String _sha256(String input) => sha256.convert(utf8.encode(input)).toString();
 }
 
 /// Maps [FirebaseAuthException] codes to Romanian, user-facing messages.
@@ -54,6 +113,8 @@ String authErrorMessage(FirebaseAuthException e) {
       return 'Email sau parolă incorectă.';
     case 'user-disabled':
       return 'Acest cont a fost dezactivat.';
+    case 'account-exists-with-different-credential':
+      return 'Există deja un cont cu acest email, creat cu altă metodă de autentificare.';
     case 'too-many-requests':
       return 'Prea multe încercări. Te rugăm să încerci mai târziu.';
     case 'network-request-failed':

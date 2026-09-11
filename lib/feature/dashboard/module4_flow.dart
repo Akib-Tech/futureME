@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:futureme/feature/chat/chat_flow.dart';
 import 'package:futureme/feature/dashboard/dashboard_navigation.dart';
 import 'package:futureme/feature/dashboard/module5_flow.dart';
+import 'package:futureme/feature/dashboard/module_answers.dart';
 import 'package:futureme/feature/dashboard/templates/module_complete_screen.dart';
 import 'package:futureme/feature/dashboard/module_progress.dart';
+import 'package:futureme/feature/dashboard/templates/insight_feedback_gate.dart';
 import 'package:futureme/feature/dashboard/templates/module_final_feedback_screen.dart';
 import 'package:futureme/feature/dashboard/templates/module_introduction_screen.dart';
 import 'package:futureme/feature/dashboard/templates/module_scale_question_screen.dart';
@@ -41,7 +43,10 @@ void startModule4(BuildContext context) {
         ],
         continueLabel: "Începe Modulul 4",
         progressNote: "Nu trebuie să ai toate punctele forte deja formate. Căutăm zonele pe care poți construi mai departe.",
-        onContinue: () => _openQuestion(context, 0),
+        onContinue: () {
+          markModuleStarted('module4');
+          _openQuestion(context, 0);
+        },
       ),
     ),
   );
@@ -57,6 +62,13 @@ void _openQuestion(BuildContext context, int index) {
         questionNumber: index + 1,
         totalQuestions: _statementsPlaceholder.length,
         onContinue: (selection) {
+          saveModuleAnswer(
+            'module4',
+            'q${index + 1}',
+            type: 'scale',
+            value: {'selectedIndex': selection},
+            questionNumber: index + 1,
+          );
           if (index + 1 < _statementsPlaceholder.length) {
             _openQuestion(context, index + 1);
           } else {
@@ -72,44 +84,51 @@ void _openFinalFeedback(BuildContext context) {
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
-      builder: (context) => ModuleFinalFeedbackScreen(
-        moduleLabel: "Modulul 4 · Imagine de ansamblu",
-        title: "Ce puncte forte se văd mai clar",
-        description:
-            "Răspunsurile tale arată câteva zone în care îți poate fi mai natural să înveți, să contribui și să construiești mai departe.",
-        connectionsTitle: "Puncte forte care ies în evidență",
-        connections: const [
-          ConnectionItem(
-            icon: Icons.psychology_outlined,
-            title: "Gândire analitică",
-            description: "Pari să ai ușurință în a înțelege situații, a observa legături și a găsi soluții când lucrurile nu sunt simple.",
-          ),
-          ConnectionItem(
-            icon: Icons.forum_outlined,
-            title: "Comunicare și colaborare",
-            description: "Îți poate fi mai natural să explici, să asculți și să lucrezi cu oameni atunci când există un scop clar.",
-          ),
-          ConnectionItem(
-            icon: Icons.checklist_outlined,
-            title: "Organizare și implementare",
-            description: "Poți funcționa bine când ai lucruri de dus la capăt, pași clari și un rezultat concret de construit.",
-          ),
-        ],
-        secondConnectionsTitle: "O zonă care merită dezvoltată",
-        secondConnections: const [
-          ConnectionItem(
-            icon: Icons.self_improvement_outlined,
-            title: "Autonomie și responsabilitate",
-            description:
-                "Această zonă poate deveni mai puternică pe măsură ce exersezi să îți organizezi pașii și să duci lucrurile mai departe în ritmul tău.",
-          ),
-        ],
-        infoNote:
-            "Aceste puncte forte ne ajută să vedem care dintre direcțiile din Modulul 3 pot fi susținute și în practică, nu doar să pară interesante.",
-        continueLabel: "Ascultă mesajul pentru tine",
-        chatLabel: "Discută Modulul 4 în Chat",
-        onContinue: () => _openModule4Complete(context),
-        onChat: () => openChat(context, contextLabel: "Modulul 4 · Imagine de ansamblu", continueLabel: "Ascultă mesajul pentru tine", onContinue: () => _openModule4Complete(context)),
+      builder: (context) => InsightFeedbackGate(
+        scope: 'module4_final',
+        moduleId: 'module4',
+        loadingLabel: "Modulul 4 · Imagine de ansamblu",
+        builder: (context, insight) => ModuleFinalFeedbackScreen(
+          moduleLabel: "Modulul 4 · Imagine de ansamblu",
+          title: "Ce puncte forte se văd mai clar",
+          description: insight?.profileDescription ??
+              "Răspunsurile tale arată câteva zone în care îți poate fi mai natural să înveți, să contribui și să construiești mai departe.",
+          connectionsTitle: "Puncte forte care ies în evidență",
+          connections: insight != null && insight.items.isNotEmpty
+              ? insightToConnectionItems(insight)
+              : const [
+                  ConnectionItem(
+                    icon: Icons.psychology_outlined,
+                    title: "Gândire analitică",
+                    description: "Pari să ai ușurință în a înțelege situații, a observa legături și a găsi soluții când lucrurile nu sunt simple.",
+                  ),
+                  ConnectionItem(
+                    icon: Icons.forum_outlined,
+                    title: "Comunicare și colaborare",
+                    description: "Îți poate fi mai natural să explici, să asculți și să lucrezi cu oameni atunci când există un scop clar.",
+                  ),
+                  ConnectionItem(
+                    icon: Icons.checklist_outlined,
+                    title: "Organizare și implementare",
+                    description: "Poți funcționa bine când ai lucruri de dus la capăt, pași clari și un rezultat concret de construit.",
+                  ),
+                ],
+          secondConnectionsTitle: "O zonă care merită dezvoltată",
+          secondConnections: const [
+            ConnectionItem(
+              icon: Icons.self_improvement_outlined,
+              title: "Autonomie și responsabilitate",
+              description:
+                  "Această zonă poate deveni mai puternică pe măsură ce exersezi să îți organizezi pașii și să duci lucrurile mai departe în ritmul tău.",
+            ),
+          ],
+          infoNote:
+              "Aceste puncte forte ne ajută să vedem care dintre direcțiile din Modulul 3 pot fi susținute și în practică, nu doar să pară interesante.",
+          continueLabel: "Ascultă mesajul pentru tine",
+          chatLabel: "Discută Modulul 4 în Chat",
+          onContinue: () => _openModule4Complete(context),
+          onChat: () => openChat(context, contextLabel: "Modulul 4 · Imagine de ansamblu", continueLabel: "Ascultă mesajul pentru tine", onContinue: () => _openModule4Complete(context)),
+        ),
       ),
     ),
   );

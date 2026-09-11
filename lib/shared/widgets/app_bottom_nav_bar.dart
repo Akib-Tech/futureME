@@ -4,16 +4,26 @@ import 'package:futureme/core/theme/app_fonts.dart';
 
 /// Figma "Action Buttons" (dashboard bottom bar, e.g. frame 61:271, also
 /// reused on the Chat screens) — a custom icon+label row, not a standard
-/// Material BottomNavigationBar. Only "Acasă" and "Chat" are wired to real
-/// screens; Raport, Resurse and Profil don't have screens built yet, so
-/// they're inert placeholders for now.
+/// Material BottomNavigationBar. A tab with no handler passed is rendered
+/// but inert.
 class AppBottomNavBar extends StatelessWidget {
-  const AppBottomNavBar({super.key, this.activeIndex = 0, this.onHomeTap, this.onChatTap});
+  const AppBottomNavBar({
+    super.key,
+    this.activeIndex = 0,
+    this.onHomeTap,
+    this.onChatTap,
+    this.onReportTap,
+    this.onResourcesTap,
+    this.onProfileTap,
+  });
 
-  /// Which item is highlighted (0 = Acasă, 1 = Chat).
+  /// Which item is highlighted (0 = Acasă, 1 = Chat, 2 = Raport, 3 = Resurse, 4 = Profil).
   final int activeIndex;
   final VoidCallback? onHomeTap;
   final VoidCallback? onChatTap;
+  final VoidCallback? onReportTap;
+  final VoidCallback? onResourcesTap;
+  final VoidCallback? onProfileTap;
 
   static const _items = [
     (icon: Icons.home_outlined, label: "Acasă"),
@@ -25,7 +35,7 @@ class AppBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final taps = [onHomeTap, onChatTap, null, null, null];
+    final taps = [onHomeTap, onChatTap, onReportTap, onResourcesTap, onProfileTap];
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: const BoxDecoration(

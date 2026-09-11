@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/core/theme/app_fonts.dart';
 import 'package:futureme/feature/age_gate/age_sixteen_twenty_screen.dart';
+import 'package:futureme/feature/authentication/pending_signup_data.dart';
 import 'package:futureme/feature/consent/consent_info.dart';
 import 'package:futureme/feature/age_gate/under_fourteen_restricted_screen.dart';
 import 'package:futureme/shared/widgets/center_text.dart';
@@ -10,9 +11,9 @@ import 'package:futureme/shared/widgets/page_title.dart';
 import 'package:futureme/shared/widgets/primary_button.dart';
 
 enum AgeBracket {
-  young,
+  youngest, 
   younger,
-  youngest,
+  young,
   older
 }
 
@@ -87,11 +88,20 @@ class AgeSetState extends State<AgeSet>{
                   child: PrimaryButton(content: "Continuă", onpressed: (){
                    switch (selectedAge) {
                      case AgeBracket.youngest:
+                       PendingSignupData.ageBracket = 'under14';
+                       PendingSignupData.consentRequired = false;
                        goToNextPage(const UnderFourteenRestrictedScreen());
                      case AgeBracket.younger:
+                       PendingSignupData.ageBracket = '14_15';
+                       PendingSignupData.consentRequired = true;
                        goToNextPage(ConsentInfo());
                      case AgeBracket.young:
+                       PendingSignupData.ageBracket = '16_17';
+                       PendingSignupData.consentRequired = false;
+                       goToNextPage(const AgeSixteenTwentyScreen());
                      case AgeBracket.older:
+                       PendingSignupData.ageBracket = '18_plus';
+                       PendingSignupData.consentRequired = false;
                        goToNextPage(const AgeSixteenTwentyScreen());
                    }
                   }),

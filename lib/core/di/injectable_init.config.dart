@@ -9,12 +9,21 @@
 // coverage:ignore-file
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:cloud_firestore/cloud_firestore.dart' as _i974;
+import 'package:cloud_functions/cloud_functions.dart' as _i809;
 import 'package:firebase_auth/firebase_auth.dart' as _i59;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 
 import '../auth/auth_service.dart' as _i88;
+import '../data/ai_content_repository.dart' as _i380;
+import '../data/chat_repository.dart' as _i534;
+import '../data/consent_repository.dart' as _i1057;
+import '../data/module_progress_repository.dart' as _i8;
+import '../data/user_repository.dart' as _i925;
 import 'firebase_module.dart' as _i616;
+import 'firestore_module.dart' as _i431;
+import 'functions_module.dart' as _i637;
 
 // initializes the registration of main-scope dependencies inside of GetIt
 _i174.GetIt init(
@@ -24,7 +33,26 @@ _i174.GetIt init(
 }) {
   final gh = _i526.GetItHelper(getIt, environment, environmentFilter);
   final firebaseModule = _$FirebaseModule();
+  final firestoreModule = _$FirestoreModule();
+  final functionsModule = _$FunctionsModule();
   gh.lazySingleton<_i59.FirebaseAuth>(() => firebaseModule.firebaseAuth);
+  gh.lazySingleton<_i974.FirebaseFirestore>(() => firestoreModule.firestore);
+  gh.lazySingleton<_i809.FirebaseFunctions>(() => functionsModule.functions);
+  gh.lazySingleton<_i380.AiContentRepository>(
+    () => _i380.AiContentRepository(gh<_i809.FirebaseFunctions>()),
+  );
+  gh.lazySingleton<_i1057.ConsentRepository>(
+    () => _i1057.ConsentRepository(gh<_i809.FirebaseFunctions>()),
+  );
+  gh.lazySingleton<_i534.ChatRepository>(
+    () => _i534.ChatRepository(gh<_i974.FirebaseFirestore>()),
+  );
+  gh.lazySingleton<_i8.ModuleProgressRepository>(
+    () => _i8.ModuleProgressRepository(gh<_i974.FirebaseFirestore>()),
+  );
+  gh.lazySingleton<_i925.UserRepository>(
+    () => _i925.UserRepository(gh<_i974.FirebaseFirestore>()),
+  );
   gh.lazySingleton<_i88.AuthService>(
     () => _i88.AuthService(gh<_i59.FirebaseAuth>()),
   );
@@ -32,3 +60,7 @@ _i174.GetIt init(
 }
 
 class _$FirebaseModule extends _i616.FirebaseModule {}
+
+class _$FirestoreModule extends _i431.FirestoreModule {}
+
+class _$FunctionsModule extends _i637.FunctionsModule {}

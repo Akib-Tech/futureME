@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:futureme/core/auth/auth_service.dart';
 import 'package:futureme/core/constants/assets.dart';
+import 'package:futureme/core/data/chat_repository.dart';
+import 'package:futureme/core/di/injectable_init.dart';
 import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/core/theme/app_fonts.dart';
 import 'package:futureme/feature/dashboard/dashboard_navigation.dart';
+import 'package:futureme/feature/profile/profile_screen.dart';
+import 'package:futureme/feature/report/report_screen.dart';
+import 'package:futureme/feature/resources/resources_screen.dart';
 import 'package:futureme/shared/widgets/app_bottom_nav_bar.dart';
 
 enum ChatSender { bot, user }
@@ -64,19 +70,58 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   int _replyIndex = 0;
 
+  String? get _uid => getIt<AuthService>().currentUser?.uid;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    final uid = _uid;
+    if (uid == null) return;
+    final history = await getIt<ChatRepository>().loadHistory(uid, widget.contextLabel);
+    if (!mounted || history.isEmpty) return;
+    setState(() {
+      _messages
+        ..clear()
+        ..addAll(
+          history.map(
+            (m) => ChatMessage(sender: m.sender == 'user' ? ChatSender.user : ChatSender.bot, text: m.text),
+          ),
+        );
+    });
+  }
+
+  void _persist(ChatSender sender, String text) {
+    final uid = _uid;
+    if (uid == null) return;
+    getIt<ChatRepository>().saveMessage(
+      uid,
+      contextLabel: widget.contextLabel,
+      sender: sender == ChatSender.user ? 'user' : 'bot',
+      text: text,
+    );
+  }
+
   void _send(String text) {
     if (text.trim().isEmpty) return;
+    final trimmed = text.trim();
     setState(() {
-      _messages.add(ChatMessage(sender: ChatSender.user, text: text.trim()));
+      _messages.add(ChatMessage(sender: ChatSender.user, text: trimmed));
       _prompts.remove(text);
       _controller.clear();
     });
+    _persist(ChatSender.user, trimmed);
     Future.delayed(const Duration(milliseconds: 400), () {
       if (!mounted) return;
+      final reply = _placeholderBotReplies[_replyIndex % _placeholderBotReplies.length];
       setState(() {
-        _messages.add(ChatMessage(sender: ChatSender.bot, text: _placeholderBotReplies[_replyIndex % _placeholderBotReplies.length]));
+        _messages.add(ChatMessage(sender: ChatSender.bot, text: reply));
         _replyIndex++;
       });
+      _persist(ChatSender.bot, reply);
     });
   }
 
@@ -252,7 +297,13 @@ class _ChatScreenState extends State<ChatScreen> {
                 ],
               ),
             ),
-            AppBottomNavBar(activeIndex: 1, onHomeTap: () => goToDashboard(context)),
+            AppBottomNavBar(
+              activeIndex: 1,
+              onHomeTap: () => goToDashboard(context),
+              onReportTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportScreen())),
+              onResourcesTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ResourcesScreen())),
+              onProfileTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen())),
+            ),
           ],
         ),
       ),

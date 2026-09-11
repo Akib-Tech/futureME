@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:futureme/core/constants/assets.dart';
 import 'package:futureme/core/theme/app_colors.dart';
+import 'package:futureme/feature/authentication/sign_in_screen.dart';
 import 'package:futureme/feature/onboarding/video_welcome_screen.dart';
 import 'package:futureme/shared/widgets/center_text.dart';
 import 'package:futureme/shared/widgets/page_title.dart';
@@ -53,7 +54,12 @@ class OnboardingScreen extends StatelessWidget{
              ),
 
               SizedBox(height:8,),
-              TagButton(content: "Am deja cont"),
+              TagButton(
+                content: "Am deja cont",
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SignInScreen()));
+                },
+              ),
               SizedBox(height:20)
 
           ],

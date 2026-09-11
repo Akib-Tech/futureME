@@ -10,6 +10,9 @@ import 'package:futureme/feature/dashboard/module4_flow.dart';
 import 'package:futureme/feature/dashboard/dashboard_navigation.dart';
 import 'package:futureme/feature/dashboard/module5_flow.dart';
 import 'package:futureme/feature/dashboard/module_progress.dart';
+import 'package:futureme/feature/profile/profile_screen.dart';
+import 'package:futureme/feature/report/report_screen.dart';
+import 'package:futureme/feature/resources/resources_screen.dart';
 import 'package:futureme/shared/widgets/app_bottom_nav_bar.dart';
 import 'package:futureme/shared/widgets/page_title.dart';
 import 'package:futureme/shared/widgets/primary_button.dart';
@@ -71,6 +74,14 @@ class ModuleInfo extends StatefulWidget {
 
 class ModuleInfoState extends State<ModuleInfo> {
   @override
+  void initState() {
+    super.initState();
+    ModuleProgress.hydrate().then((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final completed = ModuleProgress.completedModules;
     final isComplete = ModuleProgress.isAllComplete;
@@ -80,6 +91,9 @@ class ModuleInfoState extends State<ModuleInfo> {
       bottomNavigationBar: AppBottomNavBar(
         onHomeTap: () {},
         onChatTap: () => openChat(context, contextLabel: "Raportul tău · Repere de până acum"),
+        onReportTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportScreen())),
+        onResourcesTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ResourcesScreen())),
+        onProfileTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen())),
       ),
       backgroundColor: AppColors.background,
       body: SingleChildScrollView(
@@ -330,9 +344,9 @@ class _RetakeCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           GestureDetector(
-            onTap: () {
-              ModuleProgress.completedModules = 0;
-              goToDashboard(context);
+            onTap: () async {
+              await ModuleProgress.resetAll();
+              if (context.mounted) goToDashboard(context);
             },
             child: Container(
               width: double.infinity,

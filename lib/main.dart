@@ -1,8 +1,11 @@
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:futureme/core/auth/auth_service.dart';
 import 'package:futureme/core/di/injectable_init.dart';
 import 'package:futureme/core/theme/app_colors.dart';
+import 'package:futureme/feature/dashboard/module_info.dart';
 import 'package:futureme/firebase_options.dart';
 import './feature/splash/splash_screen.dart';
 
@@ -65,8 +68,17 @@ class _FirebaseAppState extends State<FirebaseApp>{
     }
     @override
     Widget build(BuildContext context){
-      return Scaffold(
-        body:  SplashScreen()
+      return StreamBuilder<User?>(
+        stream: getIt<AuthService>().authStateChanges,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(body: SizedBox.shrink());
+          }
+          final signedIn = snapshot.data != null;
+          return Scaffold(
+            body: SplashScreen(),
+          );
+        },
       );
     }
 }
