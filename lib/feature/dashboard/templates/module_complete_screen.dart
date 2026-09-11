@@ -3,11 +3,12 @@ import 'package:futureme/core/constants/assets.dart';
 import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/core/theme/app_fonts.dart';
 import 'package:futureme/shared/widgets/primary_button.dart';
+import 'package:futureme/shared/widgets/tts_audio_card.dart';
 
 /// Shared layout for the "Module N - Complete" screens (Figma frame 86:485
-/// and its per-module equivalents). The audio waveform is a static visual
-/// approximation — no audio asset/playback is wired up yet.
-class ModuleCompleteScreen extends StatefulWidget {
+/// and its per-module equivalents). The audio card actually speaks [message]
+/// aloud via on-device text-to-speech (see [TtsAudioCard]).
+class ModuleCompleteScreen extends StatelessWidget {
   const ModuleCompleteScreen({
     super.key,
     required this.title,
@@ -15,7 +16,6 @@ class ModuleCompleteScreen extends StatefulWidget {
     required this.encouragementNote,
     required this.onContinue,
     required this.onHome,
-    this.audioDuration = "0:35",
     this.continueLabel = "Continuă către feedback",
     this.homeLabel = "Înapoi Acasă",
     this.nextModuleLabel,
@@ -26,7 +26,6 @@ class ModuleCompleteScreen extends StatefulWidget {
   final String title;
   final String message;
   final String encouragementNote;
-  final String audioDuration;
   final String continueLabel;
   final String homeLabel;
 
@@ -39,17 +38,6 @@ class ModuleCompleteScreen extends StatefulWidget {
 
   final VoidCallback onContinue;
   final VoidCallback onHome;
-
-  @override
-  State<ModuleCompleteScreen> createState() => _ModuleCompleteScreenState();
-}
-
-class _ModuleCompleteScreenState extends State<ModuleCompleteScreen> {
-  bool _playing = false;
-
-  static const List<double> _waveform = [
-    4, 8, 14, 6, 16, 14, 10, 10, 10, 14, 10, 16, 10, 6, 16, 14, 10, 14, 10, 4, 16, 10, 10, 14, 10, 8, 14, 4,
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +64,7 @@ class _ModuleCompleteScreenState extends State<ModuleCompleteScreen> {
                         children: [
                           const SizedBox(height: 24),
                           Text(
-                            widget.title,
+                            title,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: AppColors.uiHeading /* ui-text-heading */,
@@ -88,7 +76,7 @@ class _ModuleCompleteScreenState extends State<ModuleCompleteScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            widget.message,
+                            message,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: AppColors.uiHeadingSmall /* ui-text-secondary */,
@@ -100,107 +88,12 @@ class _ModuleCompleteScreenState extends State<ModuleCompleteScreen> {
                             ),
                           ),
                           const SizedBox(height: 40),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              color: Colors.white /* ui-surface-card */,
-                              border: Border.all(color: AppColors.border),
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: const [
-                                BoxShadow(color: Color(0x59CFB2A4), blurRadius: 4, offset: Offset(0, 4)),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  "Mesaj pentru tine",
-                                  style: TextStyle(
-                                    color: AppColors.uiHeading /* ui-text-heading */,
-                                    fontSize: 16,
-                                    fontFamily: AppFonts.body,
-                                    fontWeight: FontWeight.w500,
-                                    height: 1.375,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                const Text(
-                                  "Un scurt mesaj de încurajare înainte să mergi mai departe.",
-                                  style: TextStyle(
-                                    color: AppColors.uiHeadingSmall /* ui-text-secondary */,
-                                    fontSize: 14,
-                                    fontFamily: AppFonts.body,
-                                    fontWeight: FontWeight.w400,
-                                    height: 1.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.faint /* ui-surface-tint */,
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      GestureDetector(
-                                        onTap: () => setState(() => _playing = !_playing),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(9),
-                                          decoration: const BoxDecoration(
-                                            gradient: AppColors.specialGradient,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            _playing ? Icons.pause : Icons.play_arrow,
-                                            size: 14,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: SizedBox(
-                                          height: 32,
-                                          child: Row(
-                                            crossAxisAlignment: CrossAxisAlignment.center,
-                                            children: [
-                                              for (final h in _waveform)
-                                                Padding(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 1),
-                                                  child: Container(
-                                                    width: 2,
-                                                    height: h,
-                                                    decoration: BoxDecoration(
-                                                      color: AppColors.grad1.withValues(alpha: 0.66),
-                                                      borderRadius: BorderRadius.circular(1),
-                                                    ),
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        widget.audioDuration,
-                                        style: const TextStyle(
-                                          color: AppColors.uiHeadingSmall /* ui-text-secondary */,
-                                          fontSize: 14,
-                                          fontFamily: AppFonts.body,
-                                          fontWeight: FontWeight.w400,
-                                          height: 1.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
+                          TtsAudioCard(
+                            title: "Mesaj pentru tine",
+                            subtitle: "Un scurt mesaj de încurajare înainte să mergi mai departe.",
+                            spokenText: message,
                           ),
-                          if (widget.nextModuleTitle != null) ...[
+                          if (nextModuleTitle != null) ...[
                             const SizedBox(height: 24),
                             Container(
                               width: double.infinity,
@@ -214,7 +107,7 @@ class _ModuleCompleteScreenState extends State<ModuleCompleteScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    widget.nextModuleLabel ?? "",
+                                    nextModuleLabel ?? "",
                                     style: const TextStyle(
                                       color: AppColors.uiHeadingSmall /* ui-text-secondary */,
                                       fontSize: 12,
@@ -224,7 +117,7 @@ class _ModuleCompleteScreenState extends State<ModuleCompleteScreen> {
                                     ),
                                   ),
                                   Text(
-                                    widget.nextModuleTitle!,
+                                    nextModuleTitle!,
                                     style: const TextStyle(
                                       color: AppColors.uiHeading /* ui-text-heading */,
                                       fontSize: 20,
@@ -235,7 +128,7 @@ class _ModuleCompleteScreenState extends State<ModuleCompleteScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    widget.nextModuleDescription ?? "",
+                                    nextModuleDescription ?? "",
                                     style: const TextStyle(
                                       color: AppColors.uiHeadingSmall /* ui-text-secondary */,
                                       fontSize: 14,
@@ -250,7 +143,7 @@ class _ModuleCompleteScreenState extends State<ModuleCompleteScreen> {
                           ],
                           const SizedBox(height: 32),
                           Text(
-                            widget.encouragementNote,
+                            encouragementNote,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: AppColors.uiHeadingSmall /* ui-text-secondary */,
@@ -273,15 +166,15 @@ class _ModuleCompleteScreenState extends State<ModuleCompleteScreen> {
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
               child: Column(
                 children: [
-                  PrimaryButton(content: widget.continueLabel, onpressed: widget.onContinue),
+                  PrimaryButton(content: continueLabel, onpressed: onContinue),
                   GestureDetector(
-                    onTap: widget.onHome,
+                    onTap: onHome,
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
                       alignment: Alignment.center,
                       child: Text(
-                        widget.homeLabel,
+                        homeLabel,
                         style: const TextStyle(
                           color: AppColors.grad1 /* ui-action-secondaryText */,
                           fontSize: 16,

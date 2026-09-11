@@ -1,13 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:injectable/injectable.dart';
 
 /// Owns `users/{uid}/moduleProgress/{moduleId}` and its `answers`
 /// subcollection. `moduleId` is `'module1'`..`'module5'`.
 @lazySingleton
 class ModuleProgressRepository {
-  ModuleProgressRepository(this._firestore);
+  ModuleProgressRepository(this._firestore, this._functions);
 
   final FirebaseFirestore _firestore;
+  final FirebaseFunctions _functions;
 
   CollectionReference<Map<String, dynamic>> _moduleProgressCollection(String uid) =>
       _firestore.collection('users').doc(uid).collection('moduleProgress');
@@ -81,5 +83,37 @@ class ModuleProgressRepository {
       batch.set(_moduleDoc(uid, 'module$i'), {'status': 'locked'}, SetOptions(merge: true));
     }
     await batch.commit();
+  }
+
+  static const int monthlyRetakeLimit = 3;
+
+  String get _currentMonthKey {
+    final now = DateTime.now();
+    return '${now.year}-${now.month.toString().padLeft(2, '0')}';
+  }
+
+  /// How many retakes `users/{uid}` has used in the current calendar month
+  /// (`retakeUsage: {month, count}`, reset implicitly once the month key
+  /// changes).
+  Future<int> retakesUsedThisMonth(String uid) async {
+    final snap = await _firestore.collection('users').doc(uid).get();
+    final usage = snap.data()?['retakeUsage'] as Map<String, dynamic>?;
+    if (usage == null || usage['month'] != _currentMonthKey) return 0;
+    return (usage['count'] as num?)?.toInt() ?? 0;
+  }
+
+  /// Records one retake against this month's quota. Call before [resetAll].
+  ///
+  /// `retakeUsage` is server-write-only (see `firestore.rules` and
+  /// `functions/account.js`'s `useRetake`) — the limit is enforced there,
+  /// not just in the client's own pre-check, so a user can't reset their
+  /// quota by writing to their own document directly. Throws a
+  /// [FirebaseFunctionsException] with code `resource-exhausted` once the
+  /// monthly limit is reached. [uid] is unused (the function always acts
+  /// on the caller's own account) but kept so call sites didn't need to
+  /// change.
+  Future<void> recordRetake(String uid) async {
+    final callable = _functions.httpsCallable('useRetake');
+    await callable.call<Map<String, dynamic>>();
   }
 }

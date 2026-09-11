@@ -6,8 +6,13 @@
  *   generateInsight           — a short, per-user interpretation of one
  *                               module/stage's answers (replaces the
  *                               hardcoded "feedback" copy in the app).
+ *   generateCareerPlan        — Module 5's directions/AI-impact/
+ *                               recommendations/training/plan, personalized
+ *                               from the user's Module 1-4 answers.
+ *   generateFinalReport       — the 6-section final report, personalized
+ *                               from the user's full Module 1-5 answers.
  *
- * Both hold the Anthropic key server-side (Cloud Secret Manager, bound via
+ * All hold the Anthropic key server-side (Cloud Secret Manager, bound via
  * runWith({secrets})) and return plain JSON. The Flutter side treats any
  * failure here as "fall back to the built-in static content" — nothing in
  * the app breaks if these aren't deployed yet or the model errors.
@@ -178,5 +183,176 @@ exports.generateInsight = functions.runWith(RUNTIME).https.onCall(async (data) =
       description: String(it.description || ""),
       level: allowed.has(it.level) ? it.level : null,
     })),
+  };
+});
+
+const CAREER_PLAN_SYSTEM = `Ești consultant de orientare profesională pentru FutureMe, o aplicație de autocunoaștere în limba română pentru tineri (14-25 ani).
+
+Primești răspunsurile agregate ale unui utilizator din Modulele 1-4 (context, profil psihologic, interese, aptitudini). Pe baza STRICTĂ a acestor răspunsuri, construiește o propunere de traseu profesional personalizată pentru Modulul 5.
+
+Reguli:
+- Limba română. Ton cald, orientativ, non-definitiv ("poate avea sens", "merită explorat", "pare"). Nu inventa fapte despre utilizator dincolo de ce a scris.
+- 3-5 direcții profesionale distincte în "directions", ordonate de la cea mai potrivită la cea mai puțin potrivită.
+- "aiImpact" are EXACT același număr de elemente ca "directions", în aceeași ordine, cu "title" identic cu direcția corespunzătoare — descrie cum poate schimba AI acea direcție și ce rămâne valoros uman.
+- 4-6 recomandări practice în "recommendations" (fără tag-uri) despre cum să aleagă/testeze direcțiile.
+- EXACT 3 opțiuni în "training": una despre studii universitare, una despre cursuri/certificări, una despre experiență practică — personalizate pe direcțiile alese.
+- EXACT 3 pași în "plan.steps", cu perioade realiste (ex. "2-4 săptămâni", "1-3 luni", "3-6 luni"). Doar primul pas are "checklist" (2-3 itemi); restul au "checklist": null.
+- "pillTone" este întotdeauna una din: "primary", "warm", "subtle".
+
+Răspunde DOAR cu un obiect JSON valid, fără markdown și fără text în plus:
+{
+  "directions": [{ "title": "...", "description": "...", "pillLabel": "eticheta scurtă de potrivire", "pillTone": "primary|warm|subtle", "tags": ["...", "..."] }],
+  "aiImpact": [{ "title": "...", "description": "...", "pillLabel": "eticheta scurtă de impact", "pillTone": "primary|warm|subtle", "tags": ["...", "..."] }],
+  "recommendations": [{ "title": "...", "description": "..." }],
+  "training": [{ "title": "...", "description": "...", "tags": ["...", "..."] }],
+  "plan": {
+    "directionTitle": "...", "directionDescription": "...", "firstStepTitle": "...", "firstStepDescription": "...",
+    "steps": [{ "title": "...", "periodLabel": "...", "description": "...", "checklist": ["...", "..."] }]
+  }
+}`;
+
+const ALLOWED_TONES = new Set(["primary", "warm", "subtle"]);
+
+function cleanTaggedCard(raw) {
+  return {
+    title: String((raw && raw.title) || ""),
+    description: String((raw && raw.description) || ""),
+    pillLabel: raw && raw.pillLabel != null && raw.pillLabel !== "" ? String(raw.pillLabel) : null,
+    pillTone: raw && ALLOWED_TONES.has(raw.pillTone) ? raw.pillTone : null,
+    tags: raw && Array.isArray(raw.tags) ? raw.tags.map(String) : [],
+  };
+}
+
+exports.generateCareerPlan = functions.runWith(RUNTIME).https.onCall(async (data) => {
+  const answers = data && Array.isArray(data.answers) ? data.answers : [];
+  if (answers.length === 0) {
+    throw new functions.https.HttpsError("invalid-argument", "answers is required and must be non-empty.");
+  }
+
+  const userMsg = `Răspunsurile utilizatorului din Modulele 1-4 (JSON):\n${JSON.stringify(answers, null, 2)}`;
+
+  let message;
+  try {
+    message = await client().messages.create({
+      model: MODEL,
+      max_tokens: 6000,
+      thinking: { type: "adaptive" },
+      system: CAREER_PLAN_SYSTEM,
+      messages: [{ role: "user", content: userMsg }],
+    });
+  } catch (err) {
+    throw new functions.https.HttpsError("internal", `Anthropic call failed: ${err.message}`);
+  }
+
+  let parsed;
+  try {
+    parsed = parseJsonBlock(firstText(message));
+  } catch (_) {
+    throw new functions.https.HttpsError("internal", "Model output was not valid JSON.");
+  }
+
+  const directions = Array.isArray(parsed.directions) ? parsed.directions.map(cleanTaggedCard) : [];
+  const aiImpact = Array.isArray(parsed.aiImpact) ? parsed.aiImpact.map(cleanTaggedCard) : [];
+  const recommendations = Array.isArray(parsed.recommendations)
+    ? parsed.recommendations.map((r) => ({ title: String((r && r.title) || ""), description: String((r && r.description) || "") }))
+    : [];
+  const training = Array.isArray(parsed.training) ? parsed.training.map(cleanTaggedCard) : [];
+  const plan = parsed.plan || {};
+  const steps = Array.isArray(plan.steps)
+    ? plan.steps.map((s) => ({
+        title: String((s && s.title) || ""),
+        periodLabel: String((s && s.periodLabel) || ""),
+        description: String((s && s.description) || ""),
+        checklist: s && Array.isArray(s.checklist) && s.checklist.length > 0 ? s.checklist.map(String) : null,
+      }))
+    : [];
+
+  if (
+    directions.length < 3 ||
+    directions.length > 5 ||
+    aiImpact.length !== directions.length ||
+    recommendations.length === 0 ||
+    training.length !== 3 ||
+    steps.length !== 3
+  ) {
+    throw new functions.https.HttpsError("internal", "Career plan output did not match the expected shape.");
+  }
+
+  return {
+    directions,
+    aiImpact,
+    recommendations,
+    training,
+    plan: {
+      directionTitle: String(plan.directionTitle || ""),
+      directionDescription: String(plan.directionDescription || ""),
+      firstStepTitle: String(plan.firstStepTitle || ""),
+      firstStepDescription: String(plan.firstStepDescription || ""),
+      steps,
+    },
+  };
+});
+
+const REPORT_SECTION_TITLES = [
+  "Profilul tău psihologic și stilul decizional",
+  "Interesele și mediile de lucru care ți se potrivesc",
+  "Punctele forte pe care poți construi",
+  "Direcții profesionale de explorat",
+  "Impactul AI asupra acestor direcții",
+  "Opțiuni de formare și planul tău în pași",
+];
+
+const FINAL_REPORT_SYSTEM = `Ești redactor de rapoarte pentru FutureMe, o aplicație de autocunoaștere în limba română pentru tineri (14-25 ani).
+
+Primești toate răspunsurile utilizatorului din Modulele 1-5. Scrie raportul final personalizat, bazat STRICT pe aceste răspunsuri — nu inventa fapte noi.
+
+Raportul are EXACT 6 secțiuni, în această ordine fixă:
+${REPORT_SECTION_TITLES.map((t, i) => `${i + 1}. ${t}`).join("\n")}
+
+Pentru fiecare secțiune scrie 3-5 propoziții personalizate. Ton cald, non-clinic, non-definitiv ("pare", "s-ar putea", "tinzi să"). Fără diagnostice.
+
+Răspunde DOAR cu un obiect JSON valid, fără markdown:
+{
+  "summary": "1-2 propoziții de rezumat general al parcursului utilizatorului",
+  "sections": ["text secțiunea 1", "text secțiunea 2", "text secțiunea 3", "text secțiunea 4", "text secțiunea 5", "text secțiunea 6"]
+}
+Exact 6 elemente în "sections", în ordinea de mai sus (fără titluri, doar corpul textului).`;
+
+exports.generateFinalReport = functions.runWith(RUNTIME).https.onCall(async (data) => {
+  const answers = data && Array.isArray(data.answers) ? data.answers : [];
+  if (answers.length === 0) {
+    throw new functions.https.HttpsError("invalid-argument", "answers is required and must be non-empty.");
+  }
+
+  const userMsg = `Răspunsurile utilizatorului din Modulele 1-5 (JSON):\n${JSON.stringify(answers, null, 2)}`;
+
+  let message;
+  try {
+    message = await client().messages.create({
+      model: MODEL,
+      max_tokens: 6000,
+      thinking: { type: "adaptive" },
+      system: FINAL_REPORT_SYSTEM,
+      messages: [{ role: "user", content: userMsg }],
+    });
+  } catch (err) {
+    throw new functions.https.HttpsError("internal", `Anthropic call failed: ${err.message}`);
+  }
+
+  let parsed;
+  try {
+    parsed = parseJsonBlock(firstText(message));
+  } catch (_) {
+    throw new functions.https.HttpsError("internal", "Model output was not valid JSON.");
+  }
+
+  const sections = Array.isArray(parsed.sections) ? parsed.sections.map(String) : [];
+  if (sections.length !== REPORT_SECTION_TITLES.length) {
+    throw new functions.https.HttpsError("internal", `Expected exactly ${REPORT_SECTION_TITLES.length} sections.`);
+  }
+
+  return {
+    summary: parsed.summary == null ? null : String(parsed.summary),
+    sections: REPORT_SECTION_TITLES.map((title, i) => ({ title, body: sections[i] })),
   };
 });

@@ -38,6 +38,14 @@ const db = admin.firestore();
 const ai = require("./ai");
 exports.generateModule1Questions = ai.generateModule1Questions;
 exports.generateInsight = ai.generateInsight;
+exports.generateCareerPlan = ai.generateCareerPlan;
+exports.generateFinalReport = ai.generateFinalReport;
+
+// Server-trusted account mutations (see account.js) — subscription status
+// and retake quota, which firestore.rules denies the client writing directly.
+const account = require("./account");
+exports.confirmSubscription = account.confirmSubscription;
+exports.useRetake = account.useRetake;
 
 // Cloud Functions v1 (used here) gets a predictable URL of the form
 // https://<region>-<projectId>.cloudfunctions.net/<name>, so the confirm

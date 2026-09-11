@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:futureme/core/auth/auth_service.dart';
+import 'package:futureme/core/data/ai_content_repository.dart';
+import 'package:futureme/core/data/module_progress_repository.dart';
+import 'package:futureme/core/data/user_repository.dart';
+import 'package:futureme/core/di/injectable_init.dart';
+import 'package:futureme/core/report/report_pdf_actions.dart';
 import 'package:futureme/feature/chat/chat_flow.dart';
 import 'package:futureme/feature/dashboard/dashboard_navigation.dart';
 import 'package:futureme/feature/dashboard/module_answers.dart';
@@ -13,6 +19,19 @@ import 'package:futureme/feature/dashboard/templates/module_final_feedback_scree
 import 'package:futureme/feature/dashboard/templates/module_introduction_screen.dart';
 import 'package:futureme/feature/dashboard/templates/module_loading_screen.dart';
 import 'package:futureme/feature/dashboard/templates/tagged_card_list_screen.dart';
+
+/// Fetches modules 1-4's saved answers for the current user, shaped for a
+/// Cloud Function payload (mirrors [InsightFeedbackGate]'s own fetch).
+Future<List<Map<String, dynamic>>> _fetchAnswersAcross(List<String> moduleIds) async {
+  final uid = getIt<AuthService>().currentUser?.uid;
+  if (uid == null) return const [];
+  final repo = getIt<ModuleProgressRepository>();
+  final answers = <Map<String, dynamic>>[];
+  for (final moduleId in moduleIds) {
+    answers.addAll(await repo.fetchAnswers(uid, moduleId));
+  }
+  return answers;
+}
 
 /// Wires the Module 5 screens ("Drumul tău mai departe") into a
 /// push-based flow. Module 5 is flat and linear — no stages, no
@@ -106,24 +125,84 @@ void _openPersonalProfile(BuildContext context) {
                 ],
           infoNote: "Nu este o concluzie finală. Este o imagine de ansamblu care ne ajută să alegem direcții mai potrivite de explorat.",
           continueLabel: "Vezi direcțiile de explorat",
-          onContinue: () => _openDirections(context),
+          onContinue: () => _openCareerPlanGate(context),
         ),
       ),
     ),
   );
 }
 
-void _openDirections(BuildContext context) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => TaggedCardListScreen(
+/// Maps a Claude-generated [GeneratedTaggedCard] to the [TaggedCard] the
+/// tagged-card-list screens render.
+TaggedCard _toTaggedCard(GeneratedTaggedCard c) => TaggedCard(
+      pillLabel: c.pillLabel,
+      pillTone: switch (c.pillTone) {
+        GeneratedCardTone.primary => CardPillTone.primary,
+        GeneratedCardTone.warm => CardPillTone.warm,
+        GeneratedCardTone.subtle => CardPillTone.subtle,
+        null => null,
+      },
+      title: c.title,
+      description: c.description,
+      tags: c.tags,
+    );
+
+PlanStep _toPlanStep(GeneratedPlanStep s) =>
+    PlanStep(title: s.title, periodLabel: s.periodLabel, description: s.description, checklist: s.checklist);
+
+/// Fetches the per-user career plan (or falls back to null, meaning every
+/// downstream screen uses its fixed content), then replaces itself with the
+/// Directions screen.
+void _openCareerPlanGate(BuildContext context) {
+  Navigator.push(context, MaterialPageRoute(builder: (context) => const _CareerPlanGate()));
+}
+
+class _CareerPlanGate extends StatefulWidget {
+  const _CareerPlanGate();
+
+  @override
+  State<_CareerPlanGate> createState() => _CareerPlanGateState();
+}
+
+class _CareerPlanGateState extends State<_CareerPlanGate> {
+  @override
+  void initState() {
+    super.initState();
+    _resolve();
+  }
+
+  Future<void> _resolve() async {
+    GeneratedCareerPlan? plan;
+    try {
+      final answers = await _fetchAnswersAcross(const ['module1', 'module2', 'module3', 'module4']);
+      if (answers.isNotEmpty) {
+        plan = await getIt<AiContentRepository>().careerPlan(answers: answers);
+      }
+    } catch (_) {
+      plan = null;
+    }
+    if (!mounted) return;
+    _openDirections(context, plan, replace: true);
+  }
+
+  @override
+  Widget build(BuildContext context) => const ModuleLoadingScreen(
+        moduleLabel: "Modulul 5 · Direcții",
+        title: "Pregătim direcțiile tale",
+        description: "Punem cap la cap reperele din modulele parcurse. Durează câteva secunde.",
+        reminderText: "Acestea sunt puncte de pornire, nu alegeri finale.",
+      );
+}
+
+void _openDirections(BuildContext context, GeneratedCareerPlan? plan, {bool replace = false}) {
+  final route = MaterialPageRoute(
+    builder: (context) => TaggedCardListScreen(
         moduleLabel: "Modulul 5 · Direcții",
         title: "Direcții care merită explorate",
         description:
             "Pe baza răspunsurilor tale, se conturează câteva direcții care merită explorate mai departe. Nu sunt alegeri finale, ci puncte de pornire.",
         tagsLabel: "Ce poți explora:",
-        cards: const [
+        cards: plan != null ? plan.directions.map(_toTaggedCard).toList() : const [
           TaggedCard(
             pillLabel: "Potrivire ridicată",
             pillTone: CardPillTone.primary,
@@ -166,13 +245,17 @@ void _openDirections(BuildContext context) {
         ],
         infoNote: "Aceste direcții sunt puncte de pornire. Unele se leagă mai clar de reperele tale de acum, iar altele pot merita explorate mai departe.",
         continueLabel: "Vezi impactul AI",
-        onContinue: () => _openAiImpact(context),
+        onContinue: () => _openAiImpact(context, plan),
       ),
-    ),
   );
+  if (replace) {
+    Navigator.pushReplacement(context, route);
+  } else {
+    Navigator.push(context, route);
+  }
 }
 
-void _openAiImpact(BuildContext context) {
+void _openAiImpact(BuildContext context, GeneratedCareerPlan? plan) {
   Navigator.push(
     context,
     MaterialPageRoute(
@@ -182,7 +265,7 @@ void _openAiImpact(BuildContext context) {
         description:
             "AI poate schimba o parte din felul în care se lucrează în aceste domenii. Asta nu înseamnă că direcțiile își pierd valoarea, ci că unele abilități pot deveni mai importante în timp.",
         tagsLabel: "Ce rămâne valoros:",
-        cards: const [
+        cards: plan != null ? plan.aiImpact.map(_toTaggedCard).toList() : const [
           TaggedCard(
             pillLabel: "Impact AI moderat",
             pillTone: CardPillTone.warm,
@@ -226,13 +309,13 @@ void _openAiImpact(BuildContext context) {
         ],
         infoNote: "Impactul AI nu elimină automat o direcție. Te ajută să vezi ce se poate schimba și ce abilități merită dezvoltate ca să rămâi adaptabil.",
         continueLabel: "Vezi recomandările tale",
-        onContinue: () => _openRecommendations(context),
+        onContinue: () => _openRecommendations(context, plan),
       ),
     ),
   );
 }
 
-void _openRecommendations(BuildContext context) {
+void _openRecommendations(BuildContext context, GeneratedCareerPlan? plan) {
   Navigator.push(
     context,
     MaterialPageRoute(
@@ -242,7 +325,9 @@ void _openRecommendations(BuildContext context) {
         description:
             "Direcțiile conturate pentru tine pot fi mai ușor de explorat când ai câteva repere clare. Aceste recomandări te ajută să vezi ce merită căutat, testat sau evitat mai departe.",
         tagsLabel: "Exemple:",
-        cards: const [
+        cards: plan != null
+            ? plan.recommendations.map((r) => TaggedCard(title: r.title, description: r.description, tags: const [])).toList()
+            : const [
           TaggedCard(
             title: "Caută combinația dintre idei, oameni și structură",
             description:
@@ -279,13 +364,13 @@ void _openRecommendations(BuildContext context) {
         ],
         infoNote: "Nu trebuie să aplici toate recomandările deodată. Alege una sau două care par cele mai utile acum și folosește-le ca punct de plecare.",
         continueLabel: "Vezi opțiunile de formare",
-        onContinue: () => _openTraining(context),
+        onContinue: () => _openTraining(context, plan),
       ),
     ),
   );
 }
 
-void _openTraining(BuildContext context) {
+void _openTraining(BuildContext context, GeneratedCareerPlan? plan) {
   Navigator.push(
     context,
     MaterialPageRoute(
@@ -295,7 +380,7 @@ void _openTraining(BuildContext context) {
         description:
             "Direcțiile conturate pentru tine pot avea mai multe rute de explorare. Unele pot cere studii mai lungi, iar altele pot fi testate prin cursuri, proiecte, mentorat sau experiență practică.",
         tagsLabel: "Exemple:",
-        cards: const [
+        cards: plan != null ? plan.training.map(_toTaggedCard).toList() : const [
           TaggedCard(
             title: "Studii universitare",
             description: "Pot fi utile pentru direcțiile care cer o bază academică mai clară, o calificare oficială sau un parcurs profesional reglementat.",
@@ -317,13 +402,14 @@ void _openTraining(BuildContext context) {
         infoNote:
             "Nu există o singură rută corectă. Important este să alegi o cale care se potrivește cu ritmul tău, cu resursele tale și cu direcția pe care vrei să o testezi mai întâi.",
         continueLabel: "Vezi planul tău",
-        onContinue: () => _openPlan(context),
+        onContinue: () => _openPlan(context, plan),
       ),
     ),
   );
 }
 
-void _openPlan(BuildContext context) {
+void _openPlan(BuildContext context, GeneratedCareerPlan? careerPlan) {
+  final plan = careerPlan?.plan;
   Navigator.push(
     context,
     MaterialPageRoute(
@@ -332,25 +418,28 @@ void _openPlan(BuildContext context) {
         title: "Următorii tăi pași",
         description: "Ai văzut câteva direcții care pot avea sens pentru tine. Acum pornim de la una dintre ele și o transformăm în pași simpli, ușor de urmat.",
         directionLabel: "Direcția de pornire",
-        directionTitle: "UX / Product Design",
-        directionDescription: "O poți explora treptat fără să o transformi imediat într-o alegere finală.",
-        firstStepTitle: "Primul pas",
-        firstStepDescription: "În următoarele 7 zile, uită-te la 2–3 proiecte reale din această direcție. Notează ce te atrage și ce ai vrea să înveți mai departe.",
+        directionTitle: plan?.directionTitle ?? "UX / Product Design",
+        directionDescription: plan?.directionDescription ?? "O poți explora treptat fără să o transformi imediat într-o alegere finală.",
+        firstStepTitle: plan?.firstStepTitle ?? "Primul pas",
+        firstStepDescription: plan?.firstStepDescription ??
+            "În următoarele 7 zile, uită-te la 2–3 proiecte reale din această direcție. Notează ce te atrage și ce ai vrea să înveți mai departe.",
         planSectionLabel: "Planul tău în 3 etape",
-        steps: const [
-          PlanStep(
-            title: "Explorează",
-            periodLabel: "2-4 săptămâni",
-            description: "Înțelege cum arată munca reală în această direcție.",
-            checklist: ["Uită-te la proiecte reale", "Caută un curs introductiv", "Notează ce te atrage și ce nu simți că ți se potrivește"],
-          ),
-          PlanStep(title: "Testează", periodLabel: "1-3 luni", description: "Claritatea apare mai ușor când încerci ceva concret."),
-          PlanStep(
-            title: "Clarifică",
-            periodLabel: "3-6 luni",
-            description: "După ce ai testat direcția, uită-te la ce ai observat și decide ce merită continuat.",
-          ),
-        ],
+        steps: plan != null
+            ? plan.steps.map(_toPlanStep).toList()
+            : const [
+                PlanStep(
+                  title: "Explorează",
+                  periodLabel: "2-4 săptămâni",
+                  description: "Înțelege cum arată munca reală în această direcție.",
+                  checklist: ["Uită-te la proiecte reale", "Caută un curs introductiv", "Notează ce te atrage și ce nu simți că ți se potrivește"],
+                ),
+                PlanStep(title: "Testează", periodLabel: "1-3 luni", description: "Claritatea apare mai ușor când încerci ceva concret."),
+                PlanStep(
+                  title: "Clarifică",
+                  periodLabel: "3-6 luni",
+                  description: "După ce ai testat direcția, uită-te la ce ai observat și decide ce merită continuat.",
+                ),
+              ],
         infoNote: "Planul acesta este un punct de pornire. Îl poți ajusta pe măsură ce descoperi ce ți se potrivește mai bine.",
         continueLabel: "Ascultă mesajul tău",
         onContinue: () => _openAudioMessage(context),
@@ -377,22 +466,63 @@ void _openAudioMessage(BuildContext context) {
   );
 }
 
+/// Generates the real final report (via `generateFinalReport`, from the
+/// user's full Module 1-5 answers) and persists it, then advances to Report
+/// Ready. Falls back to `status: 'not_generated'` if generation fails/isn't
+/// deployed — the Report tab already handles that state gracefully.
 void _openReportLoading(BuildContext context) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => ModuleLoadingScreen(
+  Navigator.push(context, MaterialPageRoute(builder: (context) => const _ReportGenerationGate()));
+}
+
+class _ReportGenerationGate extends StatefulWidget {
+  const _ReportGenerationGate();
+
+  @override
+  State<_ReportGenerationGate> createState() => _ReportGenerationGateState();
+}
+
+class _ReportGenerationGateState extends State<_ReportGenerationGate> {
+  @override
+  void initState() {
+    super.initState();
+    _resolve();
+  }
+
+  Future<void> _resolve() async {
+    final uid = getIt<AuthService>().currentUser?.uid;
+    GeneratedReport? report;
+    if (uid != null) {
+      try {
+        final answers = await _fetchAnswersAcross(const ['module1', 'module2', 'module3', 'module4', 'module5']);
+        report = answers.isNotEmpty ? await getIt<AiContentRepository>().finalReport(answers: answers) : null;
+        if (report != null) {
+          await getIt<UserRepository>().saveFinalReport(
+            uid,
+            summary: report.summary,
+            sections: [for (final s in report.sections) {'title': s.title, 'body': s.body}],
+          );
+        } else {
+          await getIt<UserRepository>().markFinalReportNotGenerated(uid);
+        }
+      } catch (_) {
+        report = null;
+        await getIt<UserRepository>().markFinalReportNotGenerated(uid);
+      }
+    }
+    if (!mounted) return;
+    _openReportReady(context, report);
+  }
+
+  @override
+  Widget build(BuildContext context) => const ModuleLoadingScreen(
         moduleLabel: "Modulul 5 • Raport",
         title: "Pregătim raportul tău",
         description: "Punem cap la cap răspunsurile, direcțiile, recomandările și pașii tăi. Mai durează puțin.",
         reminderText: "Raportul tău se pregătește...",
-        onTimeout: () => _openReportReady(context),
-      ),
-    ),
-  );
+      );
 }
 
-void _openReportReady(BuildContext context) {
+void _openReportReady(BuildContext context, GeneratedReport? report) {
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
@@ -405,13 +535,16 @@ void _openReportReady(BuildContext context) {
         achievementDescription: "Profilul tău și stilul decizional, interesele, punctele forte, direcțiile profesionale, impactul AI, opțiunile de formare și planul tău.",
         infoNote: "După ce vezi raportul, mai urmează un audio ghidat ales în funcție de rezultatele tale.",
         continueLabel: "Vezi raportul",
-        onContinue: () => _openReportPreview(context),
+        onContinue: () => _openReportPreview(context, report),
       ),
     ),
   );
 }
 
-void _openReportPreview(BuildContext context) {
+void _openReportPreview(BuildContext context, GeneratedReport? report) {
+  final sections = report == null ? null : [for (final s in report.sections) {'title': s.title, 'body': s.body}];
+  final userName = getIt<AuthService>().currentUser?.displayName?.trim();
+  final displayName = (userName?.isNotEmpty ?? false) ? userName! : "Contul tău";
   Navigator.push(
     context,
     MaterialPageRoute(
@@ -419,6 +552,10 @@ void _openReportPreview(BuildContext context) {
         titleLabel: "Raportul tău",
         primaryLabel: "Ascultă audio-ul ghidat",
         chatLabel: "Discută raportul în Chat",
+        summary: report?.summary,
+        sections: sections,
+        onDownload: sections == null ? null : () => downloadReportPdf(userName: displayName, summary: report?.summary, sections: sections),
+        onShare: sections == null ? null : () => shareReportPdf(userName: displayName, summary: report?.summary, sections: sections),
         onPrimary: () => _openGuidedAudio(context),
         onChat: () => openChat(context, contextLabel: "Modulul 5 · Raportul tău", continueLabel: "Ascultă audio-ul ghidat", onContinue: () => _openGuidedAudio(context)),
       ),
@@ -447,7 +584,6 @@ void _openGuidedAudio(BuildContext context) {
 
 void _openModule5Complete(BuildContext context) {
   ModuleProgress.markCompleted(5);
-  recordModule5ReportPlaceholder();
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(

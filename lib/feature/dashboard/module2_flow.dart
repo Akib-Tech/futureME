@@ -403,7 +403,7 @@ void _openStage2Feedback(BuildContext context) {
                     level: SummaryLevel.medium,
                   ),
                 ],
-          infoNote: "Aceste repere nu te definesc complet. Următoarele etape vor adăuga context.",
+          infoNote: "Aceste e nu te definesc complet. Următoarele etape vor adăuga context.",
           continueLabel: "Continuă cu Stilul cognitiv",
           chatLabel: "Discută feedbackul în Chat",
           onContinue: () => _openStage3Intro(context),

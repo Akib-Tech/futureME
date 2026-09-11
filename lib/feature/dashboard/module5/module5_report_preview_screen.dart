@@ -3,11 +3,11 @@ import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/core/theme/app_fonts.dart';
 import 'package:futureme/shared/widgets/primary_button.dart';
 
-/// "Module 5 - Report Preview" (Figma frame 494:2163). The PDF viewer is
-/// annotated in Figma as a visual placeholder ("use a mobile-friendly
-/// viewer with vertical scrolling and zoom") — no PDF file exists yet, so
-/// this renders a static placeholder card instead of an actual document
-/// viewer.
+/// "Module 5 - Report Preview" (Figma frame 494:2163). Figma annotates the
+/// PDF viewer as "use a mobile-friendly viewer with vertical scrolling and
+/// zoom" — there's no actual PDF file/renderer here, but when the real
+/// AI-generated report is available ([sections] non-null) its text is shown
+/// directly instead of the static placeholder card.
 class Module5ReportPreviewScreen extends StatelessWidget {
   const Module5ReportPreviewScreen({
     super.key,
@@ -18,6 +18,8 @@ class Module5ReportPreviewScreen extends StatelessWidget {
     required this.onChat,
     this.onDownload,
     this.onShare,
+    this.summary,
+    this.sections,
   });
 
   final String titleLabel;
@@ -27,6 +29,11 @@ class Module5ReportPreviewScreen extends StatelessWidget {
   final VoidCallback onChat;
   final VoidCallback? onDownload;
   final VoidCallback? onShare;
+
+  /// The real report content ({title, body} per section), or null while
+  /// generation hasn't finished/succeeded yet.
+  final String? summary;
+  final List<Map<String, String>>? sections;
 
   @override
   Widget build(BuildContext context) {
@@ -69,25 +76,71 @@ class Module5ReportPreviewScreen extends StatelessWidget {
                     boxShadow: const [BoxShadow(color: Color(0x59CFB2A4), blurRadius: 8, offset: Offset(0, 4))],
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.description_outlined, size: 64, color: AppColors.borderStrong),
-                        const SizedBox(height: 16),
-                        Text(
-                          "Raportul tău FutureMe",
-                          style: const TextStyle(
-                            color: AppColors.uiHeadingSmall,
-                            fontSize: 14,
-                            fontFamily: AppFonts.body,
-                            fontWeight: FontWeight.w400,
-                            height: 1.5,
+                  child: sections == null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.description_outlined, size: 64, color: AppColors.borderStrong),
+                              const SizedBox(height: 16),
+                              const Text(
+                                "Raportul tău FutureMe",
+                                style: TextStyle(
+                                  color: AppColors.uiHeadingSmall,
+                                  fontSize: 14,
+                                  fontFamily: AppFonts.body,
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : SingleChildScrollView(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (summary != null) ...[
+                                Text(
+                                  summary!,
+                                  style: const TextStyle(
+                                    color: AppColors.uiHeadingSmall,
+                                    fontSize: 14,
+                                    fontFamily: AppFonts.body,
+                                    fontWeight: FontWeight.w400,
+                                    height: 1.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                              ],
+                              for (final s in sections!) ...[
+                                Text(
+                                  s['title'] ?? '',
+                                  style: const TextStyle(
+                                    color: AppColors.uiHeading,
+                                    fontSize: 16,
+                                    fontFamily: AppFonts.heading,
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.25,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  s['body'] ?? '',
+                                  style: const TextStyle(
+                                    color: AppColors.dashboard,
+                                    fontSize: 14,
+                                    fontFamily: AppFonts.body,
+                                    fontWeight: FontWeight.w400,
+                                    height: 1.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
                 ),
               ),
             ),

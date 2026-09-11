@@ -1,5 +1,11 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:futureme/core/auth/auth_service.dart';
 import 'package:futureme/core/constants/assets.dart';
+import 'package:futureme/core/data/module_progress_repository.dart';
+import 'package:futureme/core/data/user_repository.dart';
+import 'package:futureme/core/di/injectable_init.dart';
+import 'package:futureme/core/subscription/subscription_service.dart';
 import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/core/theme/app_fonts.dart';
 import 'package:futureme/feature/chat/chat_flow.dart';
@@ -10,6 +16,7 @@ import 'package:futureme/feature/dashboard/module4_flow.dart';
 import 'package:futureme/feature/dashboard/dashboard_navigation.dart';
 import 'package:futureme/feature/dashboard/module5_flow.dart';
 import 'package:futureme/feature/dashboard/module_progress.dart';
+import 'package:futureme/feature/paywall/pricing_package.dart';
 import 'package:futureme/feature/profile/profile_screen.dart';
 import 'package:futureme/feature/report/report_screen.dart';
 import 'package:futureme/feature/resources/resources_screen.dart';
@@ -73,12 +80,77 @@ class ModuleInfo extends StatefulWidget {
 }
 
 class ModuleInfoState extends State<ModuleInfo> {
+  /// null while the entitlement check is in flight — the nudge banner is
+  /// only shown once we know for sure the user isn't subscribed, to avoid
+  /// a flash of it on every dashboard load.
+  bool? _isSubscribed;
+
+  /// null while unknown/loading. Only meaningful once the journey is
+  /// complete, since that's the only time the retake card shows.
+  int? _retakesRemaining;
+
   @override
   void initState() {
     super.initState();
     ModuleProgress.hydrate().then((_) {
       if (mounted) setState(() {});
     });
+    _checkSubscription();
+    _loadRetakeQuota();
+  }
+
+  Future<void> _checkSubscription() async {
+    final uid = getIt<AuthService>().currentUser?.uid;
+    if (uid == null) return;
+    final subscriptionService = getIt<SubscriptionService>();
+    await subscriptionService.logIn(uid);
+    var isSubscribed = await getIt<UserRepository>().isSubscriptionActive(uid);
+    if (!isSubscribed) {
+      isSubscribed = await subscriptionService.hasActiveEntitlement();
+    }
+    if (mounted) setState(() => _isSubscribed = isSubscribed);
+  }
+
+  Future<void> _loadRetakeQuota() async {
+    final uid = getIt<AuthService>().currentUser?.uid;
+    if (uid == null) return;
+    final used = await getIt<ModuleProgressRepository>().retakesUsedThisMonth(uid);
+    if (mounted) {
+      setState(() => _retakesRemaining = (ModuleProgressRepository.monthlyRetakeLimit - used).clamp(0, ModuleProgressRepository.monthlyRetakeLimit));
+    }
+  }
+
+  Future<void> _retake(BuildContext context) async {
+    final uid = getIt<AuthService>().currentUser?.uid;
+    if (_isSubscribed != true) {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const PricingPackage()));
+      return;
+    }
+    if ((_retakesRemaining ?? 0) <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ai folosit toate evaluările disponibile luna aceasta. Revino luna viitoare.')),
+      );
+      return;
+    }
+    if (uid != null) {
+      try {
+        await getIt<ModuleProgressRepository>().recordRetake(uid);
+      } on FirebaseFunctionsException catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e.code == 'resource-exhausted'
+                  ? 'Ai folosit toate evaluările disponibile luna aceasta. Revino luna viitoare.'
+                  : 'Nu am putut porni evaluarea din nou. Încearcă din nou.',
+            ),
+          ),
+        );
+        return;
+      }
+    }
+    await ModuleProgress.resetAll();
+    if (context.mounted) goToDashboard(context);
   }
 
   @override
@@ -107,6 +179,10 @@ class ModuleInfoState extends State<ModuleInfo> {
             children: [
               const PageTitle(content: "Bună, Andreea", textAlign: TextAlign.left),
               const SizedBox(height: 8),
+              if (_isSubscribed == false) ...[
+                const _SubscriptionNudgeBanner(),
+                const SizedBox(height: 20),
+              ],
               Text(
                 isComplete
                     ? "Ai încheiat parcursul FutureMe. Poți reveni oricând la rezultatele și reperele descoperite."
@@ -132,7 +208,7 @@ class ModuleInfoState extends State<ModuleInfo> {
                 ),
               if (isComplete) ...[
                 const SizedBox(height: 24),
-                _RetakeCard(),
+                _RetakeCard(retakesRemaining: _retakesRemaining, onRetake: () => _retake(context)),
               ],
             ],
           ),
@@ -286,8 +362,62 @@ class _RoadmapStepStatus extends StatelessWidget {
   }
 }
 
+class _SubscriptionNudgeBanner extends StatelessWidget {
+  const _SubscriptionNudgeBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: AppColors.faint, border: Border.all(color: AppColors.grad1), borderRadius: BorderRadius.circular(16)),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(color: AppColors.statusInfoBg, shape: BoxShape.circle),
+            child: const Icon(Icons.lock_outline, size: 14, color: AppColors.statusInfoFg),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Activează experiența FutureMe",
+                  style: TextStyle(color: AppColors.uiHeading, fontSize: 16, fontFamily: AppFonts.body, fontWeight: FontWeight.w500, height: 1.375),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  "Abonează-te pentru acces complet la module, chat AI și raportul final.",
+                  style: TextStyle(color: AppColors.uiHeadingSmall, fontSize: 14, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.5),
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PricingPackage())),
+                  child: const Text(
+                    "Vezi planul",
+                    style: TextStyle(color: AppColors.grad1, fontSize: 14, fontFamily: AppFonts.body, fontWeight: FontWeight.w500, height: 1.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _RetakeCard extends StatelessWidget {
-  const _RetakeCard();
+  const _RetakeCard({required this.retakesRemaining, required this.onRetake});
+
+  /// null while still loading.
+  final int? retakesRemaining;
+  final VoidCallback onRetake;
 
   @override
   Widget build(BuildContext context) {
@@ -331,9 +461,11 @@ class _RetakeCard extends StatelessWidget {
                           child: const Icon(Icons.info_outline, size: 10, color: AppColors.statusInfoFg),
                         ),
                         const SizedBox(width: 8),
-                        const Text(
-                          "2 din 3 evaluări disponibile luna aceasta",
-                          style: TextStyle(color: AppColors.statusInfoFg, fontSize: 12, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.5),
+                        Text(
+                          retakesRemaining == null
+                              ? "Se verifică evaluările disponibile..."
+                              : "$retakesRemaining din ${ModuleProgressRepository.monthlyRetakeLimit} evaluări disponibile luna aceasta",
+                          style: const TextStyle(color: AppColors.statusInfoFg, fontSize: 12, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.5),
                         ),
                       ],
                     ),
@@ -344,10 +476,7 @@ class _RetakeCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           GestureDetector(
-            onTap: () async {
-              await ModuleProgress.resetAll();
-              if (context.mounted) goToDashboard(context);
-            },
+            onTap: onRetake,
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),

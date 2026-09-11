@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:futureme/core/auth/auth_service.dart';
 import 'package:futureme/core/data/user_repository.dart';
 import 'package:futureme/core/di/injectable_init.dart';
+import 'package:futureme/core/report/report_pdf_actions.dart';
 import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/core/theme/app_fonts.dart';
 import 'package:futureme/feature/chat/chat_flow.dart';
@@ -31,8 +32,12 @@ class ReportScreen extends StatefulWidget {
 class _ReportScreenState extends State<ReportScreen> {
   bool _loading = true;
   String? _reportStatus;
+  String? _reportSummary;
+  List<Map<String, String>>? _reportSections;
 
-  static const _sections = [
+  /// Topic labels shown while the real, AI-generated sections aren't ready
+  /// yet (see [_reportSections]).
+  static const _fallbackSectionTitles = [
     "Profilul tău psihologic și stilul decizional",
     "Interesele și mediile de lucru care ți se potrivesc",
     "Punctele forte pe care poți construi",
@@ -51,10 +56,15 @@ class _ReportScreenState extends State<ReportScreen> {
     await ModuleProgress.hydrate();
     final uid = getIt<AuthService>().currentUser?.uid;
     String? status;
+    String? summary;
+    List<Map<String, String>>? sections;
     if (uid != null) {
       try {
         final report = await getIt<UserRepository>().fetchFinalReport(uid);
         status = report?['status'] as String?;
+        summary = report?['summary'] as String?;
+        final rawSections = report?['sections'] as List?;
+        sections = rawSections?.map((e) => Map<String, String>.from(e as Map)).toList();
       } catch (_) {
         status = null;
       }
@@ -62,11 +72,19 @@ class _ReportScreenState extends State<ReportScreen> {
     if (!mounted) return;
     setState(() {
       _reportStatus = status;
+      _reportSummary = summary;
+      _reportSections = sections;
       _loading = false;
     });
   }
 
+  String get _userName {
+    final user = getIt<AuthService>().currentUser;
+    return (user?.displayName?.trim().isNotEmpty ?? false) ? user!.displayName!.trim() : "Contul tău";
+  }
+
   void _openPreview() {
+    final sections = _reportSections;
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -74,6 +92,10 @@ class _ReportScreenState extends State<ReportScreen> {
           titleLabel: "Raportul tău",
           primaryLabel: "Ascultă audio-ul ghidat",
           chatLabel: "Discută raportul în Chat",
+          summary: _reportSummary,
+          sections: sections,
+          onDownload: sections == null ? null : () => downloadReportPdf(userName: _userName, summary: _reportSummary, sections: sections),
+          onShare: sections == null ? null : () => shareReportPdf(userName: _userName, summary: _reportSummary, sections: sections),
           onPrimary: () {
             Navigator.pop(context);
             _openGuidedAudio();
@@ -142,7 +164,8 @@ class _ReportScreenState extends State<ReportScreen> {
                             _LockedState(completed: completed)
                           else
                             _ReadyState(
-                              sections: _sections,
+                              sections: _reportSections,
+                              fallbackSectionTitles: _fallbackSectionTitles,
                               inPreparation: _reportStatus != 'ready',
                               onOpenPreview: _openPreview,
                               onOpenAudio: _openGuidedAudio,
@@ -223,13 +246,17 @@ class _LockedState extends StatelessWidget {
 class _ReadyState extends StatelessWidget {
   const _ReadyState({
     required this.sections,
+    required this.fallbackSectionTitles,
     required this.inPreparation,
     required this.onOpenPreview,
     required this.onOpenAudio,
     required this.onChat,
   });
 
-  final List<String> sections;
+  /// The real, AI-generated sections ({title, body}), or null while not
+  /// ready yet — falls back to [fallbackSectionTitles] in that case.
+  final List<Map<String, String>>? sections;
+  final List<String> fallbackSectionTitles;
   final bool inPreparation;
   final VoidCallback onOpenPreview;
   final VoidCallback onOpenAudio;
@@ -288,27 +315,60 @@ class _ReadyState extends StatelessWidget {
                 style: TextStyle(color: AppColors.uiHeading, fontSize: 16, fontFamily: AppFonts.heading, fontWeight: FontWeight.w500, height: 1.25),
               ),
               const SizedBox(height: 12),
-              for (final s in sections) ...[
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 3),
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.grad1)),
-                      child: const Icon(Icons.check, size: 10, color: AppColors.grad1),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        s,
-                        style: const TextStyle(color: AppColors.dashboard, fontSize: 14, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.5),
+              if (sections != null)
+                for (final s in sections!) ...[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 3),
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.grad1)),
+                        child: const Icon(Icons.check, size: 10, color: AppColors.grad1),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-              ],
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              s['title'] ?? '',
+                              style: const TextStyle(color: AppColors.uiHeading, fontSize: 14, fontFamily: AppFonts.body, fontWeight: FontWeight.w500, height: 1.5),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              s['body'] ?? '',
+                              style: const TextStyle(color: AppColors.dashboard, fontSize: 14, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.5),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                ]
+              else
+                for (final title in fallbackSectionTitles) ...[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 3),
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.grad1)),
+                        child: const Icon(Icons.check, size: 10, color: AppColors.grad1),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(color: AppColors.dashboard, fontSize: 14, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
             ],
           ),
         ),

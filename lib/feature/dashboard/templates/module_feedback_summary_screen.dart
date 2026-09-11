@@ -3,6 +3,7 @@ import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/core/theme/app_fonts.dart';
 import 'package:futureme/shared/widgets/custom_app_bar.dart';
 import 'package:futureme/shared/widgets/primary_button.dart';
+import 'package:futureme/shared/widgets/tts_audio_card.dart';
 
 enum SummaryLevel { low, medium, high }
 
@@ -73,6 +74,16 @@ class ModuleFeedbackSummaryScreen extends StatelessWidget {
   final String continueLabel;
   final VoidCallback onContinue;
   final VoidCallback onChat;
+
+  /// Composes the on-screen feedback (profile blurb + each summary item)
+  /// into one string so it can be read aloud as-is.
+  String get _spokenFeedback {
+    final parts = <String>[
+      if (profileDescription != null) profileDescription!,
+      for (final item in summaryItems) '${item.title}. ${item.description}',
+    ];
+    return parts.join(' ');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -193,6 +204,12 @@ class ModuleFeedbackSummaryScreen extends StatelessWidget {
                           ],
                         ],
                       ),
+                    ),
+                    const SizedBox(height: 24),
+                    TtsAudioCard(
+                      title: "Ascultă feedbackul tău",
+                      subtitle: "Un scurt rezumat audio al reperelor de mai sus.",
+                      spokenText: _spokenFeedback,
                     ),
                     if (nextModuleTitle != null) ...[
                       const SizedBox(height: 24),

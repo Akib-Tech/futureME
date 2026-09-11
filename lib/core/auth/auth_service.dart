@@ -8,12 +8,14 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:injectable/injectable.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:futureme/core/auth/social_auth_config.dart';
+import 'package:futureme/core/subscription/subscription_service.dart';
 
 @lazySingleton
 class AuthService {
-  AuthService(this._firebaseAuth);
+  AuthService(this._firebaseAuth, this._subscriptionService);
 
   final FirebaseAuth _firebaseAuth;
+  final SubscriptionService _subscriptionService;
   bool _googleSignInInitialized = false;
 
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
@@ -44,7 +46,10 @@ class AuthService {
     return _firebaseAuth.sendPasswordResetEmail(email: email);
   }
 
-  Future<void> signOut() => _firebaseAuth.signOut();
+  Future<void> signOut() async {
+    await _subscriptionService.logOut();
+    await _firebaseAuth.signOut();
+  }
 
   Future<void> _ensureGoogleSignInInitialized() async {
     if (_googleSignInInitialized) return;

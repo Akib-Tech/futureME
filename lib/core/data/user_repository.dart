@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:injectable/injectable.dart';
 import 'package:futureme/feature/authentication/pending_signup_data.dart';
@@ -9,9 +10,10 @@ import 'package:futureme/feature/authentication/pending_signup_data.dart';
 /// account is created (email/password signup or first social sign-in).
 @lazySingleton
 class UserRepository {
-  UserRepository(this._firestore);
+  UserRepository(this._firestore, this._functions);
 
   final FirebaseFirestore _firestore;
+  final FirebaseFunctions _functions;
 
   DocumentReference<Map<String, dynamic>> _userDoc(String uid) => _firestore.collection('users').doc(uid);
 
@@ -63,10 +65,32 @@ class UserRepository {
 
   /// The `users/{uid}/reports/finalReport` document written when Module 5
   /// finishes, or null if the journey isn't complete. `status` is
-  /// `'not_generated'` until real report generation exists.
+  /// `'ready'` with real `summary`/`sections` when [saveFinalReport]
+  /// succeeded, or `'not_generated'` if AI generation failed/isn't deployed.
   Future<Map<String, dynamic>?> fetchFinalReport(String uid) async {
     final snap = await _userDoc(uid).collection('reports').doc('finalReport').get();
     return snap.data();
+  }
+
+  /// Persists the AI-generated final report (see `generateFinalReport` in
+  /// `functions/ai.js`).
+  Future<void> saveFinalReport(String uid, {String? summary, required List<Map<String, String>> sections}) {
+    return _userDoc(uid).collection('reports').doc('finalReport').set({
+      'status': 'ready',
+      if (summary != null) 'summary': summary,
+      'sections': sections,
+      'completedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  /// Marks the report as not generated — used when AI generation fails or
+  /// the Cloud Function isn't deployed, so the report screen can show its
+  /// "in pregătire" fallback instead of nothing.
+  Future<void> markFinalReportNotGenerated(String uid) {
+    return _userDoc(uid).collection('reports').doc('finalReport').set({
+      'status': 'not_generated',
+      'completedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   Future<void> updateDisplayName(String uid, String name) {
@@ -75,13 +99,37 @@ class UserRepository {
     ).set({'displayName': name, 'updatedAt': FieldValue.serverTimestamp()}, SetOptions(merge: true));
   }
 
-  /// Records the plan the user picked on the pricing screen. This is a
-  /// client-set flag only, not verified entitlement — real purchase
-  /// validation needs RevenueCat + a server-side webhook (separate,
-  /// already-tracked future work).
-  Future<void> recordSubscriptionSelection(String uid, {required String plan}) {
-    return _userDoc(uid).set({
-      'subscription': {'status': 'active_unverified', 'plan': plan, 'selectedAt': FieldValue.serverTimestamp()},
-    }, SetOptions(merge: true));
+  /// Records the plan the user picked on the pricing screen, before real
+  /// purchases existed. Kept only so pre-RevenueCat accounts that already
+  /// have this flag stay grandfathered in by [isSubscriptionActive] — new
+  /// purchases should call [recordVerifiedPurchase] instead.
+  ///
+  /// `subscription` is server-write-only (see `firestore.rules` and
+  /// `functions/account.js`'s `confirmSubscription`) — a user can't grant
+  /// themselves access by writing to their own document directly, so this
+  /// goes through that callable instead of a direct Firestore write. [uid]
+  /// is unused (the function always acts on the caller's own account) but
+  /// kept in the signature so call sites didn't need to change.
+  Future<void> recordSubscriptionSelection(String uid, {required String plan}) => _confirmSubscription(plan: plan, verified: false);
+
+  /// Records a completed Apple/Google in-app purchase confirmed client-side
+  /// by RevenueCat. Still not server-verified (no webhook yet — see
+  /// docs/BACKEND_API_SPEC.md), but reflects a real store purchase rather
+  /// than just a plan tap. See [recordSubscriptionSelection] for why this
+  /// calls a Cloud Function rather than writing Firestore directly.
+  Future<void> recordVerifiedPurchase(String uid, {required String plan}) => _confirmSubscription(plan: plan, verified: true);
+
+  Future<void> _confirmSubscription({required String plan, required bool verified}) async {
+    final callable = _functions.httpsCallable('confirmSubscription');
+    await callable.call<Map<String, dynamic>>({'plan': plan, 'verified': verified});
+  }
+
+  /// True if `users/{uid}` carries either a verified purchase or the
+  /// legacy pre-RevenueCat "active_unverified" flag (grandfathered so
+  /// existing accounts aren't locked out by this gate).
+  Future<bool> isSubscriptionActive(String uid) async {
+    final profile = await fetchProfile(uid);
+    final status = (profile?['subscription'] as Map?)?['status'];
+    return status == 'active' || status == 'active_unverified';
   }
 }

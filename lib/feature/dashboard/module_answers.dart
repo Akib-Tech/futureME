@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:futureme/core/auth/auth_service.dart';
 import 'package:futureme/core/data/module_progress_repository.dart';
 import 'package:futureme/core/di/injectable_init.dart';
@@ -33,16 +32,4 @@ void saveModuleAnswer(
     stage: stage,
     questionNumber: questionNumber,
   );
-}
-
-/// Records that Module 5 finished, in `users/{uid}/reports/finalReport`.
-/// `status` stays `'not_generated'` — actual PDF/audio report generation is
-/// separate future work (Claude API), not built here.
-void recordModule5ReportPlaceholder() {
-  final uid = getIt<AuthService>().currentUser?.uid;
-  if (uid == null) return;
-  getIt<FirebaseFirestore>().collection('users').doc(uid).collection('reports').doc('finalReport').set({
-    'status': 'not_generated',
-    'completedAt': FieldValue.serverTimestamp(),
-  }, SetOptions(merge: true));
 }

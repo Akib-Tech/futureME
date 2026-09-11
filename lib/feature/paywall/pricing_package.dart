@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show PlatformException;
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:futureme/core/auth/auth_service.dart';
 import 'package:futureme/core/data/user_repository.dart';
 import 'package:futureme/core/di/injectable_init.dart';
+import 'package:futureme/core/subscription/subscription_service.dart';
 import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/core/theme/app_fonts.dart';
+import 'package:futureme/feature/paywall/failed_payment.dart';
 import 'package:futureme/feature/paywall/success_payment.dart';
 import 'package:futureme/shared/widgets/center_text.dart';
 import 'package:futureme/shared/widgets/custom_app_bar.dart';
+import 'package:futureme/shared/widgets/link_text.dart';
 import 'package:futureme/shared/widgets/page_title.dart';
 import 'package:futureme/shared/widgets/primary_button.dart';
 
@@ -18,11 +23,83 @@ class PricingPackage extends StatefulWidget {
 }
 
 class PricingPackageState extends State<PricingPackage> {
+  static const _features = ["5 module FutureMe", "Chat AI cu ghidare personalizată", "3 evaluări / lună", "Raport PDF + audio final"];
+
+  Package? _monthlyPackage;
+  bool _isPurchasing = false;
+  bool _isRestoring = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOffering();
+  }
+
+  Future<void> _loadOffering() async {
+    final offering = await getIt<SubscriptionService>().getCurrentOffering();
+    final package = offering?.monthly ?? offering?.availablePackages.firstOrNull;
+    if (mounted) setState(() => _monthlyPackage = package);
+  }
+
   void goToNextPage(Widget? nextPage) {
     Navigator.push(context, MaterialPageRoute(builder: (context) => nextPage!));
   }
 
-  static const _features = ["5 module FutureMe", "Chat AI cu ghidare personalizată", "3 evaluări / lună", "Raport PDF + audio final"];
+  Future<void> _continueWithMonthlyPlan() async {
+    if (_isPurchasing || _isRestoring) return;
+    setState(() => _isPurchasing = true);
+    try {
+      final uid = getIt<AuthService>().currentUser?.uid;
+      final subscriptionService = getIt<SubscriptionService>();
+      final package = _monthlyPackage;
+
+      if (subscriptionService.isAvailable && package != null) {
+        await subscriptionService.purchasePackage(package);
+        if (uid != null) {
+          await getIt<UserRepository>().recordVerifiedPurchase(uid, plan: 'monthly');
+        }
+      } else {
+        // RevenueCat not configured yet (see RevenueCatConfig) — fall back
+        // to the old unverified flag so the flow stays testable.
+        if (uid != null) {
+          await getIt<UserRepository>().recordSubscriptionSelection(uid, plan: 'monthly');
+        }
+      }
+      if (!mounted) return;
+      goToNextPage(SuccessPayment());
+    } on PlatformException catch (e) {
+      if (PurchasesErrorHelper.getErrorCode(e) == PurchasesErrorCode.purchaseCancelledError) return;
+      if (!mounted) return;
+      goToNextPage(FailedPayment());
+    } catch (_) {
+      if (!mounted) return;
+      goToNextPage(FailedPayment());
+    } finally {
+      if (mounted) setState(() => _isPurchasing = false);
+    }
+  }
+
+  Future<void> _restorePurchases() async {
+    if (_isPurchasing || _isRestoring) return;
+    setState(() => _isRestoring = true);
+    try {
+      final isActive = await getIt<SubscriptionService>().restorePurchases();
+      if (!mounted) return;
+      if (isActive) {
+        final uid = getIt<AuthService>().currentUser?.uid;
+        if (uid != null) {
+          await getIt<UserRepository>().recordVerifiedPurchase(uid, plan: 'monthly');
+        }
+        goToNextPage(SuccessPayment());
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nu am găsit niciun abonament activ pentru acest cont.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRestoring = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,20 +120,19 @@ class PricingPackageState extends State<PricingPackage> {
                     SizedBox(height: 16),
                     CenterText(content: "Planul include experiența FutureMe completă: modulele ghidate, raportul personalizat și audio-ul final."),
                     SizedBox(height: 24),
-                    _MonthlyPlanCard(features: _features),
+                    _MonthlyPlanCard(features: _features, priceText: _monthlyPackage?.storeProduct.priceString),
                     SizedBox(height: 24),
                     PrimaryButton(
-                      content: "Continuă cu planul lunar",
-                      onpressed: () {
-                        final uid = getIt<AuthService>().currentUser?.uid;
-                        if (uid != null) {
-                          getIt<UserRepository>().recordSubscriptionSelection(uid, plan: 'monthly');
-                        }
-                        goToNextPage(SuccessPayment());
-                      },
+                      content: _isPurchasing ? "Se procesează..." : "Continuă cu planul lunar",
+                      onpressed: (_isPurchasing || _isRestoring) ? null : _continueWithMonthlyPlan,
                     ),
                     SizedBox(height: 16),
-                    CenterText(content: "Plata este securizată prin magazinul aplicației. Abonamentul se reînnoiește automat și poate fi gestionat oricând."),
+                    LinkText(
+                      content: _isRestoring ? "Se restaurează..." : "Restaurează achizițiile",
+                      onTap: (_isPurchasing || _isRestoring) ? null : _restorePurchases,
+                    ),
+                    SizedBox(height: 16),
+                    CenterText(content: "Plata este securizată prin magazinul aplicației (App Store / Google Play). Abonamentul se reînnoiește automat și poate fi gestionat oricând."),
                     SizedBox(height: 24),
                   ],
                 ),
@@ -97,9 +173,14 @@ class _FeatureRow extends StatelessWidget {
 }
 
 class _MonthlyPlanCard extends StatelessWidget {
-  const _MonthlyPlanCard({required this.features});
+  const _MonthlyPlanCard({required this.features, this.priceText});
 
   final List<String> features;
+
+  /// The store's localized price (e.g. "29,90 lei"), once the RevenueCat
+  /// offering has loaded. Falls back to placeholder copy until then / when
+  /// RevenueCat isn't configured yet.
+  final String? priceText;
 
   @override
   Widget build(BuildContext context) {
@@ -120,16 +201,18 @@ class _MonthlyPlanCard extends StatelessWidget {
           ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: const [
+            children: [
               Text(
-                "29,9",
-                style: TextStyle(color: AppColors.grad1, fontSize: 28, fontFamily: AppFonts.heading, fontWeight: FontWeight.w600, height: 1.21),
+                priceText ?? "29,9",
+                style: const TextStyle(color: AppColors.grad1, fontSize: 28, fontFamily: AppFonts.heading, fontWeight: FontWeight.w600, height: 1.21),
               ),
-              SizedBox(width: 4),
-              Text(
-                "lei/lună",
-                style: TextStyle(color: AppColors.dashboard, fontSize: 18, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.56),
-              ),
+              if (priceText == null) ...[
+                const SizedBox(width: 4),
+                const Text(
+                  "lei/lună",
+                  style: TextStyle(color: AppColors.dashboard, fontSize: 18, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.56),
+                ),
+              ],
             ],
           ),
           const Text(
