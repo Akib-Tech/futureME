@@ -1,28 +1,27 @@
-import 'package:flutter_tts/flutter_tts.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:injectable/injectable.dart';
+import 'package:just_audio/just_audio.dart';
 
-/// Reads module feedback/messages aloud with the device's on-device text-to-
-/// speech engine — no audio files, no backend, no API key. Replaces the
-/// old play/pause buttons that only toggled an icon without ever producing
-/// sound.
+/// Speaks module feedback in the app's own cloned voice: the text is sent to
+/// the `synthesizeSpeech` callable, which returns a cached MP3 URL that plays
+/// here. Replaces the on-device engine, whose robotic delivery undercut the
+/// warmth the written feedback is meant to carry.
 @lazySingleton
 class TtsService {
-  final FlutterTts _tts = FlutterTts();
-  bool _ready = false;
+  final AudioPlayer _player = AudioPlayer();
 
-  Future<void> _ensureReady() async {
-    if (_ready) return;
-    await _tts.setLanguage('ro-RO');
-    await _tts.awaitSpeakCompletion(true);
-    _ready = true;
-  }
-
-  /// Speaks [text] aloud. Completes once speech finishes, or immediately
+  /// Speaks [text] aloud. Completes once playback finishes, or immediately
   /// once [stop] is called from elsewhere.
   Future<void> speak(String text) async {
-    await _ensureReady();
-    await _tts.speak(text);
+    final result = await FirebaseFunctions.instance
+        .httpsCallable('synthesizeSpeech')
+        .call<Map<String, dynamic>>({'text': text});
+
+    await _player.setUrl(result.data['url'] as String);
+    await _player.play();
+    await _player.processingStateStream.firstWhere((s) => s == ProcessingState.completed);
+    await _player.stop();
   }
 
-  Future<void> stop() => _tts.stop();
+  Future<void> stop() => _player.stop();
 }
