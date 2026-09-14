@@ -38,6 +38,15 @@ class UserRepository {
       'updatedAt': now,
       'lastLoginAt': now,
       if (PendingSignupData.ageBracket != null) 'ageBracket': PendingSignupData.ageBracket,
+      if (PendingSignupData.ageSignalSource != null)
+        'ageSignal': {
+          'source': PendingSignupData.ageSignalSource,
+          if (PendingSignupData.ageSignalBracket != null) 'bracket': PendingSignupData.ageSignalBracket,
+          if (PendingSignupData.ageSignalDeclarationSource != null)
+            'declarationSource': PendingSignupData.ageSignalDeclarationSource,
+          if (PendingSignupData.ageSignalCheckedAt != null)
+            'checkedAt': Timestamp.fromDate(PendingSignupData.ageSignalCheckedAt!),
+        },
       'consent': {
         'required': consentRequired,
         'status': !consentRequired
