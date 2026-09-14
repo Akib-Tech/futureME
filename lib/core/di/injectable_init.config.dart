@@ -15,6 +15,7 @@ import 'package:firebase_auth/firebase_auth.dart' as _i59;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 
+import '../age/age_range_signal_service.dart' as _i980;
 import '../audio/tts_service.dart' as _i384;
 import '../auth/auth_service.dart' as _i88;
 import '../data/ai_content_repository.dart' as _i380;
@@ -37,6 +38,9 @@ _i174.GetIt init(
   final firebaseModule = _$FirebaseModule();
   final firestoreModule = _$FirestoreModule();
   final functionsModule = _$FunctionsModule();
+  gh.lazySingleton<_i980.AgeRangeSignalService>(
+    () => _i980.AgeRangeSignalService(),
+  );
   gh.lazySingleton<_i384.TtsService>(() => _i384.TtsService());
   gh.lazySingleton<_i59.FirebaseAuth>(() => firebaseModule.firebaseAuth);
   gh.lazySingleton<_i974.FirebaseFirestore>(() => firestoreModule.firestore);

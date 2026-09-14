@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:futureme/core/age/age_range_signal_service.dart';
+import 'package:futureme/core/di/injectable_init.dart';
 import 'package:futureme/core/theme/app_colors.dart';
 import 'package:futureme/core/theme/app_fonts.dart';
 import 'package:futureme/feature/age_gate/age_sixteen_twenty_screen.dart';
@@ -9,6 +11,36 @@ import 'package:futureme/shared/widgets/center_text.dart';
 import 'package:futureme/shared/widgets/custom_app_bar.dart';
 import 'package:futureme/shared/widgets/page_title.dart';
 import 'package:futureme/shared/widgets/primary_button.dart';
+
+// Bracket string codes, ordered most-to-least restrictive — matches
+// PendingSignupData.ageBracket's coding exactly.
+const _bracketOrder = ['under14', '14_15', '16_17', '18_plus'];
+
+String _codeFor(AgeBracket bracket) {
+  switch (bracket) {
+    case AgeBracket.youngest:
+      return 'under14';
+    case AgeBracket.younger:
+      return '14_15';
+    case AgeBracket.young:
+      return '16_17';
+    case AgeBracket.older:
+      return '18_plus';
+  }
+}
+
+/// Corroborating-signal policy: when Apple's OS-level Declared Age Range
+/// check (see [AgeRangeSignalService]) disagrees with what the user
+/// self-reported, the more restrictive (younger) of the two wins. The
+/// self-report UI above is unchanged either way — this only affects which
+/// bracket actually gets recorded and which screen comes next.
+String _resolveBracketCode(String selfReportedCode, AgeRangeSignalResult? signal) {
+  if (signal == null) return selfReportedCode;
+  final selfIndex = _bracketOrder.indexOf(selfReportedCode);
+  final signalIndex = _bracketOrder.indexOf(signal.ageBracketCode);
+  if (selfIndex == -1 || signalIndex == -1) return selfReportedCode;
+  return signalIndex < selfIndex ? signal.ageBracketCode : selfReportedCode;
+}
 
 enum AgeBracket {
   youngest, 
@@ -29,6 +61,11 @@ class AgeSetState extends State<AgeSet>{
 
     AgeBracket selectedAge = AgeBracket.younger;
 
+    // Kicked off as soon as the screen loads so it's (usually) already
+    // resolved by the time the user taps "Continuă". Never throws — see
+    // AgeRangeSignalService.
+    late final Future<AgeRangeSignalResult?> _ageSignal;
+
     void goToNextPage(Widget? nextPage){
       Navigator.push(context,MaterialPageRoute(builder: (context) => nextPage! ));
     }
@@ -36,6 +73,7 @@ class AgeSetState extends State<AgeSet>{
     @override
     void initState(){
       super.initState();
+      _ageSignal = getIt<AgeRangeSignalService>().checkDeclaredAgeRange();
     }
 
     @override
@@ -85,23 +123,36 @@ class AgeSetState extends State<AgeSet>{
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                  child: PrimaryButton(content: "Continuă", onpressed: (){
-                   switch (selectedAge) {
-                     case AgeBracket.youngest:
-                       PendingSignupData.ageBracket = 'under14';
-                       PendingSignupData.consentRequired = false;
+                  child: PrimaryButton(content: "Continuă", onpressed: () async {
+                   final selfReportedCode = _codeFor(selectedAge);
+
+                   AgeRangeSignalResult? signal;
+                   try {
+                     // A corroborating signal should never make onboarding
+                     // hang — give it a few seconds, then move on without it.
+                     signal = await _ageSignal.timeout(const Duration(seconds: 3));
+                   } catch (_) {
+                     signal = null;
+                   }
+                   if (!mounted) return;
+
+                   final resolvedCode = _resolveBracketCode(selfReportedCode, signal);
+
+                   PendingSignupData.ageBracket = resolvedCode;
+                   PendingSignupData.consentRequired = resolvedCode == '14_15';
+                   PendingSignupData.ageSignalSource = signal != null ? 'declaredAgeRange' : null;
+                   PendingSignupData.ageSignalBracket = signal?.ageBracketCode;
+                   PendingSignupData.ageSignalDeclarationSource = signal?.declarationSource.name;
+                   PendingSignupData.ageSignalCheckedAt = signal != null ? DateTime.now() : null;
+
+                   switch (resolvedCode) {
+                     case 'under14':
                        goToNextPage(const UnderFourteenRestrictedScreen());
-                     case AgeBracket.younger:
-                       PendingSignupData.ageBracket = '14_15';
-                       PendingSignupData.consentRequired = true;
+                     case '14_15':
                        goToNextPage(ConsentInfo());
-                     case AgeBracket.young:
-                       PendingSignupData.ageBracket = '16_17';
-                       PendingSignupData.consentRequired = false;
-                       goToNextPage(const AgeSixteenTwentyScreen());
-                     case AgeBracket.older:
-                       PendingSignupData.ageBracket = '18_plus';
-                       PendingSignupData.consentRequired = false;
+                     case '16_17':
+                     case '18_plus':
+                     default:
                        goToNextPage(const AgeSixteenTwentyScreen());
                    }
                   }),
