@@ -29,7 +29,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -59,18 +58,26 @@ const PROJECT_ID = "futureme-a6ea7";
 const REGION = "us-central1";
 const CONFIRM_URL = `https://${REGION}-${PROJECT_ID}.cloudfunctions.net/confirmConsent`;
 
-// Gmail account used to send consent emails. Its app password is bound via
-// runWith({secrets: ["GMAIL_APP_PASSWORD"]}); set it once with:
-//   firebase functions:secrets:set GMAIL_APP_PASSWORD
-const GMAIL_USER = "ibraheemakin201@gmail.com";
 
-function mailer() {
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    auth: { user: GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+// Consent emails go out through Resend rather than Gmail SMTP: a verified
+// sending domain keeps them out of parents' spam folders, which a personal
+// Gmail account could not reliably do. Set the key once with:
+//   firebase functions:secrets:set RESEND_API_KEY
+const FROM_ADDRESS = "Echipa FutureMe <no-reply@futuremeromania.ro>";
+
+async function sendMail({ to, subject, html }) {
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ from: FROM_ADDRESS, to, subject, html }),
   });
+
+  if (!response.ok) {
+    throw new Error(`Resend returned ${response.status}: ${await response.text()}`);
+  }
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -101,7 +108,7 @@ function renderHtmlPage(title, body) {
  * Callable. Body: { parentEmail }. Creates the consent request and sends
  * the real email. Returns { requestId }.
  */
-exports.requestConsent = functions.runWith({ secrets: ["GMAIL_APP_PASSWORD"] }).https.onCall(async (data) => {
+exports.requestConsent = functions.runWith({ secrets: ["RESEND_API_KEY"] }).https.onCall(async (data) => {
   const parentEmail = String((data && data.parentEmail) || "").trim();
   if (!EMAIL_RE.test(parentEmail)) {
     throw new functions.https.HttpsError("invalid-argument", "Adresa de email a părintelui nu este validă.");
@@ -124,8 +131,7 @@ exports.requestConsent = functions.runWith({ secrets: ["GMAIL_APP_PASSWORD"] }).
   const confirmUrl = `${CONFIRM_URL}?id=${docRef.id}&token=${token}`;
 
   try {
-    await mailer().sendMail({
-      from: GMAIL_USER,
+        await sendMail({
       to: parentEmail,
       subject: "FutureMe – cerere de acord părinte/tutore",
       html: `
