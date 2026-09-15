@@ -54,7 +54,7 @@ SizedBox(height: 20),
           VideoLessonCard(title: "Mesaj de bun venit"),
             SizedBox(height: 100),
            PrimaryButton(content:"Continuă",onpressed: (){
-            Navigator.push(context,MaterialPageRoute(builder: (context) => AgeSet() ));
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AgeSet()));
             }),
          ] )
           )

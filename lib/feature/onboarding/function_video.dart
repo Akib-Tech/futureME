@@ -17,7 +17,7 @@ class FunctionVideo extends StatefulWidget{
 
 class FunctionVideoState extends State<FunctionVideo>{
   void goToNextPage(Widget? nextPage){
-      Navigator.push(context,MaterialPageRoute(builder: (context) => nextPage! ));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => nextPage!));
   }
 
 @override
