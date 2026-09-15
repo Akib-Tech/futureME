@@ -54,8 +54,12 @@ class AuthService {
   Future<void> _ensureGoogleSignInInitialized() async {
     if (_googleSignInInitialized) return;
     await GoogleSignIn.instance.initialize(
-      serverClientId: SocialAuthConfig.androidServerClientId,
-      clientId: defaultTargetPlatform == TargetPlatform.iOS ? SocialAuthConfig.iosClientId : null,
+      serverClientId: SocialAuthConfig.hasAndroidServerClientId
+          ? SocialAuthConfig.androidServerClientId
+          : null,
+      clientId: defaultTargetPlatform == TargetPlatform.iOS
+          ? SocialAuthConfig.iosClientId
+          : null,
     );
     _googleSignInInitialized = true;
   }
