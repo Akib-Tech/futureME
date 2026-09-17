@@ -44,7 +44,11 @@ Widget build(BuildContext context){
              SizedBox(height: 16),
           CenterText(content: "Înainte să mergem mai departe, ți-am pregătit un mesaj care să îți arate ce urmează și să te ajute să pornești cu mai multă încredere."),
             SizedBox(height: 20),
-          VideoLessonCard(title: "Cum va decurge experiența", duration: "2 min"),
+          VideoLessonCard(
+            title: "Cum va decurge experiența",
+            duration: "2 min",
+            assetPath: "assets/videos/explanation.mp4",
+          ),
             SizedBox(height: 20,),
 
             CheckIconRow(text: "Fără presiune sau răspunsuri perfecte", color: AppColors.grad1),

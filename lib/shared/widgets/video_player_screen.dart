@@ -3,7 +3,12 @@ import 'package:futureme/shared/widgets/video_player_card.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoApp extends StatefulWidget {
-  const VideoApp({super.key});
+  const VideoApp({super.key, required this.assetPath});
+
+  /// Which clip to play, e.g. `assets/videos/intro.mp4`. Every screen that
+  /// shows a video passes its own, so they don't all end up playing the
+  /// onboarding intro.
+  final String assetPath;
 
   @override
   State<VideoApp> createState() => _VideoAppState();
@@ -17,11 +22,13 @@ class _VideoAppState extends State<VideoApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _controller = VideoPlayerController.asset(
-      'assets/videos/intro.mp4',
+      widget.assetPath,
       viewType: VideoViewType.platformView,
       videoPlayerOptions: VideoPlayerOptions(allowBackgroundPlayback: false),
     );
-    _controller.initialize().then((_) => setState(() {}));
+    _controller.initialize().then((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   /// Navigating forward pushes the next screen on top rather than replacing

@@ -142,8 +142,7 @@ class SignInScreenState extends State<SignInScreen> {
                       AppTextField(
                         hintText: "Parola ta",
                         controller: _passwordController,
-                        obscureText: true,
-                        suffixIcon: const Icon(Icons.visibility_outlined),
+                        isPassword: true,
                       ),
                     ]),
                     const SizedBox(height: 8),

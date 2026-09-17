@@ -6,8 +6,9 @@ import 'package:futureme/shared/widgets/primary_button.dart';
 import 'package:futureme/shared/widgets/tts_audio_card.dart';
 
 /// Shared layout for the "Module N - Complete" screens (Figma frame 86:485
-/// and its per-module equivalents). The audio card actually speaks [message]
-/// aloud via on-device text-to-speech (see [TtsAudioCard]).
+/// and its per-module equivalents). The audio card speaks [message] aloud
+/// via on-device text-to-speech, or plays [audioAssetPath] when a module
+/// has a recorded message instead (see [TtsAudioCard]).
 class ModuleCompleteScreen extends StatelessWidget {
   const ModuleCompleteScreen({
     super.key,
@@ -21,6 +22,7 @@ class ModuleCompleteScreen extends StatelessWidget {
     this.nextModuleLabel,
     this.nextModuleTitle,
     this.nextModuleDescription,
+    this.audioAssetPath,
   });
 
   final String title;
@@ -35,6 +37,11 @@ class ModuleCompleteScreen extends StatelessWidget {
   final String? nextModuleLabel;
   final String? nextModuleTitle;
   final String? nextModuleDescription;
+
+  /// Optional recorded message for this module, e.g.
+  /// `assets/audio/module1_complete.m4a`. Falls back to text-to-speech of
+  /// [message] when absent.
+  final String? audioAssetPath;
 
   final VoidCallback onContinue;
   final VoidCallback onHome;
@@ -92,6 +99,7 @@ class ModuleCompleteScreen extends StatelessWidget {
                             title: "Mesaj pentru tine",
                             subtitle: "Un scurt mesaj de încurajare înainte să mergi mai departe.",
                             spokenText: message,
+                            assetPath: audioAssetPath,
                           ),
                           if (nextModuleTitle != null) ...[
                             const SizedBox(height: 24),

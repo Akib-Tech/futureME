@@ -51,7 +51,10 @@ SizedBox(height: 20),
              SizedBox(height: 16),
           CenterText(content: "Am pregătit un mesaj scurt pentru tine, ca să știi cum vom merge mai departe: pas cu pas, fără presiune.", width: 305,),
             SizedBox(height: 20),
-          VideoLessonCard(title: "Mesaj de bun venit"),
+          VideoLessonCard(
+            title: "Mesaj de bun venit",
+            assetPath: "assets/videos/intro.mp4",
+          ),
             SizedBox(height: 100),
            PrimaryButton(content:"Continuă",onpressed: (){
               Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AgeSet()));
