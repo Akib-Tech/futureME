@@ -146,7 +146,7 @@ class LoginPageState extends State<LoginPage>{
                         LeftBoldText(content: "Parolă"),
                         const SizedBox(height:8),
                         RoundedCard(contents: [
-                          AppTextField(hintText: "Alege o parolă", controller: _passwordController, obscureText: true, suffixIcon: const Icon(Icons.visibility_outlined)),
+                          AppTextField(hintText: "Alege o parolă", controller: _passwordController, isPassword: true),
                         ]),
 
                         const SizedBox(height: 24,),

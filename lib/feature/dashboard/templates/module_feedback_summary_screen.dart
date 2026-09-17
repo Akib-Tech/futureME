@@ -377,20 +377,28 @@ class _SummaryRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    item.title,
-                    style: const TextStyle(
-                      color: AppColors.uiHeading /* ui-text-heading */,
-                      fontSize: 16,
-                      fontFamily: AppFonts.body,
-                      fontWeight: FontWeight.w500,
-                      height: 1.375,
+                  Expanded(
+                    child: Text(
+                      item.title,
+                      style: const TextStyle(
+                        color: AppColors.uiHeading /* ui-text-heading */,
+                        fontSize: 16,
+                        fontFamily: AppFonts.body,
+                        fontWeight: FontWeight.w500,
+                        height: 1.375,
+                      ),
                     ),
                   ),
-                  if (item.level != null) _LevelPill(level: item.level!),
-                  if (item.badgeLabel != null) _TraitPill(label: item.badgeLabel!),
+                  if (item.level != null) ...[
+                    const SizedBox(width: 8),
+                    _LevelPill(level: item.level!),
+                  ],
+                  if (item.badgeLabel != null) ...[
+                    const SizedBox(width: 8),
+                    _TraitPill(label: item.badgeLabel!),
+                  ],
                 ],
               ),
               const SizedBox(height: 8),
