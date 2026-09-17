@@ -47,6 +47,10 @@ const account = require("./account");
 exports.confirmSubscription = account.confirmSubscription;
 exports.useRetake = account.useRetake;
 
+// ElevenLabs speech synthesis with Storage caching (see tts.js) — the app's
+// feedback cards play this instead of the device's robotic on-device voice.
+const tts = require("./tts");
+exports.synthesizeSpeech = tts.synthesizeSpeech;
 // Cloud Functions v1 (used here) gets a predictable URL of the form
 // https://<region>-<projectId>.cloudfunctions.net/<name>, so the confirm
 // link can be built without waiting for a post-deploy URL. Update REGION if
