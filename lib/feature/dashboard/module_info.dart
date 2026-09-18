@@ -148,49 +148,55 @@ class ModuleInfoState extends State<ModuleInfo> {
         onProfileTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen())),
       ),
       backgroundColor: AppColors.background,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(10),
-        scrollDirection: Axis.vertical,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-          decoration: const BoxDecoration(color: AppColors.background),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              PageTitle(content: _firstName != null ? "Bună, $_firstName" : "Bună", textAlign: TextAlign.left),
-              const SizedBox(height: 8),
-              if (_hasAccess == false) ...[
-                const _SubscriptionNudgeBanner(),
-                const SizedBox(height: 20),
-              ],
-              Text(
-                isComplete
-                    ? "Ai încheiat parcursul FutureMe. Poți reveni oricând la rezultatele și reperele descoperite."
-                    : "Mergem pas cu pas. Nu trebuie să ai toate răspunsurile de la început.",
-                style: const TextStyle(color: AppColors.uiHeadingSmall, fontSize: 16, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.5),
-              ),
-              const SizedBox(height: 20),
-              _ModuleCard(currentIndex: currentIndex, isComplete: isComplete),
-              const SizedBox(height: 24),
-              const Text(
-                "Parcursul tău FutureMe",
-                style: TextStyle(color: AppColors.uiHeading, fontSize: 20, fontFamily: AppFonts.heading, fontWeight: FontWeight.w500, height: 1.2),
-              ),
-              const SizedBox(height: 16),
-              for (int i = 0; i < _modules.length; i++)
-                _RoadmapStepStatus(
-                  label: _modules[i].label,
-                  state: i < completed
-                      ? _StepState.completed
-                      : (i == completed && !isComplete)
-                      ? _StepState.available
-                      : (isComplete ? _StepState.completed : _StepState.upcoming),
+      // The greeting sat directly under the status bar and the Dynamic
+      // Island; the bottom bar handles its own inset, so only the top is
+      // taken here.
+      body: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+          scrollDirection: Axis.vertical,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
+            decoration: const BoxDecoration(color: AppColors.background),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                PageTitle(content: _firstName != null ? "Bună, $_firstName" : "Bună", textAlign: TextAlign.left),
+                const SizedBox(height: 8),
+                if (_hasAccess == false) ...[
+                  const _SubscriptionNudgeBanner(),
+                  const SizedBox(height: 20),
+                ],
+                Text(
+                  isComplete
+                      ? "Ai încheiat parcursul FutureMe. Poți reveni oricând la rezultatele și reperele descoperite."
+                      : "Mergem pas cu pas. Nu trebuie să ai toate răspunsurile de la început.",
+                  style: const TextStyle(color: AppColors.uiHeadingSmall, fontSize: 16, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.5),
                 ),
-              if (isComplete) ...[
+                const SizedBox(height: 20),
+                _ModuleCard(currentIndex: currentIndex, isComplete: isComplete),
                 const SizedBox(height: 24),
-                _NewAssessmentCard(onStart: () => _startNewAssessment(context)),
+                const Text(
+                  "Parcursul tău FutureMe",
+                  style: TextStyle(color: AppColors.uiHeading, fontSize: 20, fontFamily: AppFonts.heading, fontWeight: FontWeight.w500, height: 1.2),
+                ),
+                const SizedBox(height: 16),
+                for (int i = 0; i < _modules.length; i++)
+                  _RoadmapStepStatus(
+                    label: _modules[i].label,
+                    state: i < completed
+                        ? _StepState.completed
+                        : (i == completed && !isComplete)
+                        ? _StepState.available
+                        : (isComplete ? _StepState.completed : _StepState.upcoming),
+                  ),
+                if (isComplete) ...[
+                  const SizedBox(height: 24),
+                  _NewAssessmentCard(onStart: () => _startNewAssessment(context)),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -330,12 +336,14 @@ class _RoadmapStepStatus extends StatelessWidget {
               ),
             ),
           ),
-          if (badgeLabel != null)
+          if (badgeLabel != null) ...[
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(color: badgeBg, border: Border.all(color: badgeBorder!), borderRadius: BorderRadius.circular(9999)),
               child: Text(badgeLabel, style: TextStyle(color: badgeFg, fontSize: 12, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.5)),
             ),
+          ],
         ],
       ),
     );

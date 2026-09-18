@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:futureme/core/data/big_five.dart';
 import 'package:futureme/core/data/mbti.dart';
 import 'package:futureme/core/data/mbti_summaries.dart';
 import 'package:futureme/feature/chat/chat_flow.dart';
 import 'package:futureme/feature/dashboard/dashboard_navigation.dart';
 import 'package:futureme/feature/dashboard/module_answers.dart';
+import 'package:futureme/feature/dashboard/templates/big_five_result_screen.dart';
 import 'package:futureme/feature/dashboard/templates/module_complete_screen.dart';
 import 'package:futureme/feature/dashboard/module_progress.dart';
 import 'package:futureme/feature/dashboard/templates/insight_feedback_gate.dart';
@@ -18,26 +20,18 @@ import 'package:futureme/feature/dashboard/templates/stage_complete_screen.dart'
 
 /// Wires the Module 2 screens into a push-based flow.
 ///
-/// Stage 1 runs the real MBTI questionnaire: the 32 items live in
-/// `core/data/mbti.dart` and the result is computed from the instrument's
-/// own scoring key, then matched against one of the sixteen fixed profiles.
-/// No model is involved — the same answers always produce the same type.
+/// Stages 1 and 2 run the real instruments: the MBTI items in
+/// `core/data/mbti.dart` and the IPIP-50 Big Five items in
+/// `core/data/big_five.dart`. Both are scored by their own published keys,
+/// and the result selects one of a fixed set of texts. No model is
+/// involved, so the same answers always produce the same result.
 ///
-/// PLACEHOLDER CONTENT: Stages 2-6 still run on small stand-in lists, since
+/// PLACEHOLDER CONTENT: Stages 3-6 still run on small stand-in lists, since
 /// their real question banks aren't available yet. Their feedback is still
 /// model-generated as a result.
 
-/// PLACEHOLDER CONTENT: Stage 2 says "50 de afirmații scurte" in Figma but
-/// only shows one example. Small stand-in list below.
-const List<String> _stage2PlaceholderStatements = [
-  "Îmi place să explorez idei și perspective noi.",
-  "Prefer să am un plan clar înainte să încep ceva.",
-  "Mă simt energizată în compania altor oameni.",
-  "Pun preț pe armonie și pe cum se simt cei din jur.",
-  "Rămân calmă chiar și în situații stresante.",
-];
-
-/// PLACEHOLDER CONTENT — see note on [_stage2PlaceholderStatements].
+/// PLACEHOLDER CONTENT: Figma says "25 de afirmații scurte" but only shows
+/// one example. Small stand-in list below.
 const List<String> _stage3PlaceholderStatements = [
   "Prefer să înțeleg imaginea de ansamblu înainte de detalii.",
   "Analizez lucrurile pas cu pas, logic.",
@@ -46,7 +40,7 @@ const List<String> _stage3PlaceholderStatements = [
   "Lucrez mai bine când am pași clari de urmat.",
 ];
 
-/// PLACEHOLDER CONTENT — see note on [_stage2PlaceholderStatements].
+/// PLACEHOLDER CONTENT — see note on [_stage3PlaceholderStatements].
 const List<String> _stage4PlaceholderStatements = [
   "Prefer să analizez toate opțiunile înainte să aleg.",
   "Uneori aleg pe baza intuiției, nu doar a logicii.",
@@ -55,7 +49,7 @@ const List<String> _stage4PlaceholderStatements = [
   "Amân o decizie când nu mă simt pregătită.",
 ];
 
-/// PLACEHOLDER CONTENT — see note on [_stage2PlaceholderStatements].
+/// PLACEHOLDER CONTENT — see note on [_stage3PlaceholderStatements].
 const List<String> _stage5PlaceholderStatements = [
   "Simt presiune când am multe lucruri de făcut deodată.",
   "Mă îndoiesc de mine când trebuie să aleg repede.",
@@ -64,7 +58,7 @@ const List<String> _stage5PlaceholderStatements = [
   "Sub presiune, îmi este greu să văd clar.",
 ];
 
-/// PLACEHOLDER CONTENT — see note on [_stage2PlaceholderStatements].
+/// PLACEHOLDER CONTENT — see note on [_stage3PlaceholderStatements].
 const List<String> _stage6PlaceholderStatements = [
   "Simt că alegerile mele pot schimba lucrurile în timp.",
   "Cred că unele rezultate depind mai mult de context decât de mine.",
@@ -297,7 +291,7 @@ void _openStage1Feedback(BuildContext context, MbtiResult result) {
 }
 
 // ---------------------------------------------------------------------------
-// Stage 2 — Big Five (placeholder content)
+// Stage 2 — Big Five (IPIP-50)
 // ---------------------------------------------------------------------------
 
 void _openStage2Intro(BuildContext context) {
@@ -308,42 +302,49 @@ void _openStage2Intro(BuildContext context) {
         moduleLabel: "Etapa 2 din 6 · Big Five / OCEAN",
         moduleTitle: "Care este personalitatea ta",
         description:
-            "Aici observi cum se conturează personalitatea ta: relația cu ideile noi, nevoia de structură, felul în care te simți cu oamenii și cum reacționezi la stres.",
-        nextSteps: const [
-          "50 de afirmații scurte",
+            "Acest chestionar explorează 5 dimensiuni fundamentale ale personalității tale: deschidere către experiențe, conștiinciozitate, extraversie, agreabilitate și stabilitate emoțională.",
+        nextSteps: [
+          "${bigFiveItems.length} de afirmații scurte",
           "Alegi cât de adevărată se simte fiecare afirmație",
-          "Înțelegi cum lucrezi, relaționezi și reacționezi la stres",
+          "Descoperi cum se conturează cele 5 dimensiuni ale personalității tale",
         ],
-        continueLabel: "Începe etapa",
+        continueLabel: "Începem",
         progressNote: "Răspunde sincer, nu cum crezi că „ar trebui”.",
-        onContinue: () => _openStage2Question(context, 0),
+        onContinue: () => _openStage2Question(context, 0, const {}),
       ),
     ),
   );
 }
 
-void _openStage2Question(BuildContext context, int index) {
+/// [answers] maps an item number to the option the user picked, 1-5,
+/// carried forward so the whole questionnaire is scored in one go.
+void _openStage2Question(BuildContext context, int index, Map<int, int> answers) {
+  final item = bigFiveItems[index];
   Navigator.push(
     context,
     MaterialPageRoute(
       builder: (context) => ModuleScaleQuestionScreen(
         sectionLabel: "Care este personalitatea ta",
-        statement: _stage2PlaceholderStatements[index],
+        statement: item.statement,
+        options: bigFiveScaleLabels,
         questionNumber: index + 1,
-        totalQuestions: _stage2PlaceholderStatements.length,
+        totalQuestions: bigFiveItems.length,
         onContinue: (selection) {
+          // The screen reports a 0-based index; the instrument scores 1-5.
+          final answer = selection + 1;
           saveModuleAnswer(
             'module2',
-            'stage2_q${index + 1}',
+            'stage2_q${item.number}',
             type: 'scale',
-            value: {'selectedIndex': selection},
+            value: {'selectedIndex': selection, 'answer': answer},
             stage: 2,
-            questionNumber: index + 1,
+            questionNumber: item.number,
           );
-          if (index + 1 < _stage2PlaceholderStatements.length) {
-            _openStage2Question(context, index + 1);
+          final next = {...answers, item.number: answer};
+          if (index + 1 < bigFiveItems.length) {
+            _openStage2Question(context, index + 1, next);
           } else {
-            _openStage2Complete(context);
+            _openStage2Complete(context, scoreBigFive(next));
           }
         },
       ),
@@ -351,7 +352,29 @@ void _openStage2Question(BuildContext context, int index) {
   );
 }
 
-void _openStage2Complete(BuildContext context) {
+void _openStage2Complete(BuildContext context, BigFiveResult result) {
+  // Stored the way the specification asks: the recoded score of every item,
+  // plus each dimension's raw score, mean and band, so the result can be
+  // audited against the raw answers saved alongside it.
+  saveModuleAnswer(
+    'module2',
+    'stage2_result',
+    type: 'big_five_result',
+    value: {
+      'version': 'ipip-50-ro-v1',
+      'recoded': {for (final e in result.recodedAnswers.entries) '${e.key}': e.value},
+      'dimensions': {
+        for (final d in result.dimensions)
+          d.dimension.name: {
+            'rawScore': d.rawScore,
+            'mean': d.mean,
+            'level': d.level.name,
+          },
+      },
+    },
+    stage: 2,
+  );
+
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
@@ -361,10 +384,10 @@ void _openStage2Complete(BuildContext context) {
         message:
             "Ai parcurs etapa despre personalitatea ta. Răspunsurile tale încep să așeze câteva repere, iar în continuare le privim fără concluzii fixe.",
         achievementTitle: "Care este personalitatea ta",
-        achievementSubtitle: "50 de afirmații finalizate",
+        achievementSubtitle: "${bigFiveItems.length} de afirmații finalizate",
         infoNote: "Nu trebuie să te recunoști perfect în fiecare reper. Căutăm direcții, nu definiții.",
-        primaryLabel: "Vezi feedbackul",
-        onPrimary: () => _openStage2Feedback(context),
+        primaryLabel: "Vezi rezultatul",
+        onPrimary: () => _openStage2Feedback(context, result),
         secondaryLabel: "Revin mai târziu",
         onSecondary: () => goToDashboard(context),
       ),
@@ -372,63 +395,14 @@ void _openStage2Complete(BuildContext context) {
   );
 }
 
-void _openStage2Feedback(BuildContext context) {
+void _openStage2Feedback(BuildContext context, BigFiveResult result) {
   Navigator.pushReplacement(
     context,
     MaterialPageRoute(
-      builder: (context) => InsightFeedbackGate(
-        scope: 'module2_stage2',
-        moduleId: 'module2',
-        stage: 2,
-        loadingLabel: "Etapa 2 · Feedback scurt",
-        builder: (context, insight) => ModuleFeedbackSummaryScreen(
-          moduleLabel: "Etapa 2 · Feedback scurt",
-          title: "O privire asupra personalității tale",
-          description:
-              "Cele 5 dimensiuni te ajută să vezi cum îți iei energia, cum lucrezi, cum relaționezi și cum gestionezi schimbarea sau stresul.",
-          profileLabel: insight?.profileLabel,
-          profileValue: insight?.profileValue,
-          profileDescription: insight?.profileDescription,
-          summaryItems: insight != null
-              ? insightToSummaryItems(insight)
-              : const [
-                  SummaryItem(
-                    icon: Icons.explore_outlined,
-                    title: "Curiozitate",
-                    description: "Pari atrasă de idei noi, perspective diferite și contexte în care poți explora.",
-                    level: SummaryLevel.high,
-                  ),
-                  SummaryItem(
-                    icon: Icons.checklist_outlined,
-                    title: "Organizare",
-                    description: "Îți poate fi mai ușor să funcționezi când ai structură, pași clari și obiective definite.",
-                    level: SummaryLevel.medium,
-                  ),
-                  SummaryItem(
-                    icon: Icons.bolt_outlined,
-                    title: "Energie socială",
-                    description: "Pari să îți încarci energia mai ales în spații calme sau alături de oameni apropiați.",
-                    level: SummaryLevel.low,
-                  ),
-                  SummaryItem(
-                    icon: Icons.handshake_outlined,
-                    title: "Relaționare",
-                    description: "Pari să pui preț pe cooperare, armonie și pe felul în care se simt cei din jur.",
-                    level: SummaryLevel.high,
-                  ),
-                  SummaryItem(
-                    icon: Icons.self_improvement_outlined,
-                    title: "Echilibru emoțional",
-                    description: "În perioade încărcate, poate fi util să îți acorzi timp ca să îți recapeți echilibrul.",
-                    level: SummaryLevel.medium,
-                  ),
-                ],
-          infoNote: "Aceste repere nu te definesc complet. Următoarele etape vor adăuga context.",
-          continueLabel: "Continuă cu Stilul cognitiv",
-          chatLabel: "Discută feedbackul în Chat",
-          onContinue: () => _openStage3Intro(context),
-          onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 2 · Feedback scurt", continueLabel: "Continuă cu Stilul cognitiv", onContinue: () => _openStage3Intro(context)),
-        ),
+      builder: (context) => BigFiveResultScreen(
+        result: result,
+        onContinue: () => _openStage3Intro(context),
+        onChat: () => openChat(context, contextLabel: "Modulul 2 · Etapa 2 · Profil de personalitate", continueLabel: "Continuă cu Stilul cognitiv", onContinue: () => _openStage3Intro(context)),
       ),
     ),
   );

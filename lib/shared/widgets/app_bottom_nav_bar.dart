@@ -37,37 +37,52 @@ class AppBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final taps = [onHomeTap, onChatTap, onReportTap, onResourcesTap, onProfileTap];
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: const BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
         boxShadow: [BoxShadow(color: Color(0x0D251006), blurRadius: 12, offset: Offset(0, -6))],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          for (int i = 0; i < _items.length; i++)
-            GestureDetector(
-              onTap: taps[i],
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(_items[i].icon, size: 24, color: i == activeIndex ? AppColors.grad1 : AppColors.uiHeadingSmall),
-                  const SizedBox(height: 4),
-                  Text(
-                    _items[i].label,
-                    style: TextStyle(
-                      color: i == activeIndex ? AppColors.grad1 : AppColors.uiHeadingSmall,
-                      fontSize: 13,
-                      fontFamily: AppFonts.body,
-                      fontWeight: FontWeight.w500,
-                      height: 1.23,
+      /// Keeps the row clear of the home indicator, and of the rounded
+      /// screen corners that were clipping the first and last labels.
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+          child: Row(
+            children: [
+              for (int i = 0; i < _items.length; i++)
+                /// Equal-width slots rather than spaceBetween: the outer two
+                /// items no longer sit against the screen edge, and a longer
+                /// label can't shift the others out of line.
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: taps[i],
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(_items[i].icon, size: 24, color: i == activeIndex ? AppColors.grad1 : AppColors.uiHeadingSmall),
+                        const SizedBox(height: 4),
+                        Text(
+                          _items[i].label,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: i == activeIndex ? AppColors.grad1 : AppColors.uiHeadingSmall,
+                            fontSize: 13,
+                            fontFamily: AppFonts.body,
+                            fontWeight: FontWeight.w500,
+                            height: 1.23,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
-        ],
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
