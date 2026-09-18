@@ -1,8 +1,6 @@
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:futureme/core/auth/auth_service.dart';
 import 'package:futureme/core/constants/assets.dart';
-import 'package:futureme/core/data/module_progress_repository.dart';
 import 'package:futureme/core/data/user_repository.dart';
 import 'package:futureme/core/di/injectable_init.dart';
 import 'package:futureme/core/subscription/subscription_service.dart';
@@ -13,7 +11,6 @@ import 'package:futureme/feature/dashboard/module1_flow.dart';
 import 'package:futureme/feature/dashboard/module2_flow.dart';
 import 'package:futureme/feature/dashboard/module3_flow.dart';
 import 'package:futureme/feature/dashboard/module4_flow.dart';
-import 'package:futureme/feature/dashboard/dashboard_navigation.dart';
 import 'package:futureme/feature/dashboard/module5_flow.dart';
 import 'package:futureme/feature/dashboard/module_progress.dart';
 import 'package:futureme/feature/paywall/pricing_package.dart';
@@ -48,7 +45,7 @@ const List<_ModuleMeta> _modules = [
     onStart: startModule1,
   ),
   _ModuleMeta(
-    label: "Profil psihologic",
+    label: "Profil psihologic & stil decizional",
     description: "În acest modul explorezi felul în care gândești, iei decizii și reacționezi în situații diferite.",
     startLabel: "Începe Modulul 2",
     onStart: startModule2,
@@ -81,13 +78,15 @@ class ModuleInfo extends StatefulWidget {
 
 class ModuleInfoState extends State<ModuleInfo> {
   /// null while the entitlement check is in flight — the nudge banner is
-  /// only shown once we know for sure the user isn't subscribed, to avoid
-  /// a flash of it on every dashboard load.
-  bool? _isSubscribed;
+  /// only shown once we know for sure the user hasn't paid, to avoid a
+  /// flash of it on every dashboard load.
+  bool? _hasAccess;
 
-  /// null while unknown/loading. Only meaningful once the journey is
-  /// complete, since that's the only time the retake card shows.
-  int? _retakesRemaining;
+  /// First name for the greeting, from the profile's `displayName` (set at
+  /// signup from PendingSignupData.firstName). null while loading, or when
+  /// the account has no name on it — the greeting drops the name rather
+  /// than showing a placeholder.
+  String? _firstName;
 
   @override
   void initState() {
@@ -95,62 +94,43 @@ class ModuleInfoState extends State<ModuleInfo> {
     ModuleProgress.hydrate().then((_) {
       if (mounted) setState(() {});
     });
-    _checkSubscription();
-    _loadRetakeQuota();
+    _loadProfile();
   }
 
-  Future<void> _checkSubscription() async {
-    final uid = getIt<AuthService>().currentUser?.uid;
+  /// One read of `users/{uid}` covering both the greeting and the paywall
+  /// gate — these used to be two separate fetches of the same document.
+  Future<void> _loadProfile() async {
+    final user = getIt<AuthService>().currentUser;
+    final uid = user?.uid;
     if (uid == null) return;
+
     final subscriptionService = getIt<SubscriptionService>();
     await subscriptionService.logIn(uid);
-    var isSubscribed = await getIt<UserRepository>().isSubscriptionActive(uid);
-    if (!isSubscribed) {
-      isSubscribed = await subscriptionService.hasActiveEntitlement();
-    }
-    if (mounted) setState(() => _isSubscribed = isSubscribed);
-  }
 
-  Future<void> _loadRetakeQuota() async {
-    final uid = getIt<AuthService>().currentUser?.uid;
-    if (uid == null) return;
-    final used = await getIt<ModuleProgressRepository>().retakesUsedThisMonth(uid);
+    final profile = await getIt<UserRepository>().fetchProfile(uid);
+    final status = (profile?['subscription'] as Map?)?['status'];
+    var hasAccess = status == 'active' || status == 'active_unverified';
+    if (!hasAccess) {
+      hasAccess = await subscriptionService.hasActiveEntitlement();
+    }
+
+    // Social sign-in returns a full name; the greeting only wants the
+    // first word of it.
+    final displayName = (profile?['displayName'] as String?) ?? user?.displayName;
+    final firstName = displayName?.trim().split(RegExp(r'\s+')).firstOrNull;
+
     if (mounted) {
-      setState(() => _retakesRemaining = (ModuleProgressRepository.monthlyRetakeLimit - used).clamp(0, ModuleProgressRepository.monthlyRetakeLimit));
+      setState(() {
+        _hasAccess = hasAccess;
+        _firstName = (firstName != null && firstName.isNotEmpty) ? firstName : null;
+      });
     }
   }
 
-  Future<void> _retake(BuildContext context) async {
-    final uid = getIt<AuthService>().currentUser?.uid;
-    if (_isSubscribed != true) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const PricingPackage()));
-      return;
-    }
-    if ((_retakesRemaining ?? 0) <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ai folosit toate evaluările disponibile luna aceasta. Revino luna viitoare.')),
-      );
-      return;
-    }
-    if (uid != null) {
-      try {
-        await getIt<ModuleProgressRepository>().recordRetake(uid);
-      } on FirebaseFunctionsException catch (e) {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e.code == 'resource-exhausted'
-                  ? 'Ai folosit toate evaluările disponibile luna aceasta. Revino luna viitoare.'
-                  : 'Nu am putut porni evaluarea din nou. Încearcă din nou.',
-            ),
-          ),
-        );
-        return;
-      }
-    }
-    await ModuleProgress.resetAll();
-    if (context.mounted) goToDashboard(context);
+  /// A new run is a fresh purchase, so this always goes through the
+  /// paywall — the finished journey's results stay readable either way.
+  void _startNewAssessment(BuildContext context) {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const PricingPackage()));
   }
 
   @override
@@ -177,9 +157,9 @@ class ModuleInfoState extends State<ModuleInfo> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const PageTitle(content: "Bună, Andreea", textAlign: TextAlign.left),
+              PageTitle(content: _firstName != null ? "Bună, $_firstName" : "Bună", textAlign: TextAlign.left),
               const SizedBox(height: 8),
-              if (_isSubscribed == false) ...[
+              if (_hasAccess == false) ...[
                 const _SubscriptionNudgeBanner(),
                 const SizedBox(height: 20),
               ],
@@ -208,7 +188,7 @@ class ModuleInfoState extends State<ModuleInfo> {
                 ),
               if (isComplete) ...[
                 const SizedBox(height: 24),
-                _RetakeCard(retakesRemaining: _retakesRemaining, onRetake: () => _retake(context)),
+                _NewAssessmentCard(onStart: () => _startNewAssessment(context)),
               ],
             ],
           ),
@@ -392,14 +372,14 @@ class _SubscriptionNudgeBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  "Abonează-te pentru acces complet la module, chat AI și raportul final.",
+                  "Plătești o singură dată pentru acces complet la module, chat AI și raportul final.",
                   style: TextStyle(color: AppColors.uiHeadingSmall, fontSize: 14, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.5),
                 ),
                 const SizedBox(height: 8),
                 GestureDetector(
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PricingPackage())),
                   child: const Text(
-                    "Vezi planul",
+                    "Vezi detalii",
                     style: TextStyle(color: AppColors.grad1, fontSize: 14, fontFamily: AppFonts.body, fontWeight: FontWeight.w500, height: 1.5),
                   ),
                 ),
@@ -412,12 +392,13 @@ class _SubscriptionNudgeBanner extends StatelessWidget {
   }
 }
 
-class _RetakeCard extends StatelessWidget {
-  const _RetakeCard({required this.retakesRemaining, required this.onRetake});
+/// Shown once the journey is finished. A second run is a second purchase,
+/// so this card sells rather than just offering a reset — the finished
+/// results stay available regardless of whether the user buys again.
+class _NewAssessmentCard extends StatelessWidget {
+  const _NewAssessmentCard({required this.onStart});
 
-  /// null while still loading.
-  final int? retakesRemaining;
-  final VoidCallback onRetake;
+  final VoidCallback onStart;
 
   @override
   Widget build(BuildContext context) {
@@ -442,12 +423,12 @@ class _RetakeCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "Vrei să refaci evaluarea?",
+                      "Vrei să parcurgi FutureMe din nou?",
                       style: TextStyle(color: AppColors.uiHeading, fontSize: 16, fontFamily: AppFonts.body, fontWeight: FontWeight.w500, height: 1.375),
                     ),
                     const SizedBox(height: 4),
                     const Text(
-                      "O poți relua atunci când simți că răspunsurile tale nu te mai reprezintă.",
+                      "Poți începe o nouă evaluare și vei primi un nou raport personalizat.",
                       style: TextStyle(color: AppColors.uiHeadingSmall, fontSize: 14, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.5),
                     ),
                     const SizedBox(height: 8),
@@ -461,11 +442,11 @@ class _RetakeCard extends StatelessWidget {
                           child: const Icon(Icons.info_outline, size: 10, color: AppColors.statusInfoFg),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          retakesRemaining == null
-                              ? "Se verifică evaluările disponibile..."
-                              : "$retakesRemaining din ${ModuleProgressRepository.monthlyRetakeLimit} evaluări disponibile luna aceasta",
-                          style: const TextStyle(color: AppColors.statusInfoFg, fontSize: 12, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.5),
+                        const Expanded(
+                          child: Text(
+                            "Rezultatele de acum rămân disponibile în secțiunea Raport.",
+                            style: TextStyle(color: AppColors.statusInfoFg, fontSize: 12, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.5),
+                          ),
                         ),
                       ],
                     ),
@@ -476,15 +457,15 @@ class _RetakeCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           GestureDetector(
-            onTap: onRetake,
+            onTap: onStart,
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               decoration: BoxDecoration(color: AppColors.faint, border: Border.all(color: AppColors.grad1), borderRadius: BorderRadius.circular(100)),
               alignment: Alignment.center,
               child: const Text(
-                "Reia evaluarea",
-                style: TextStyle(color: AppColors.grad1, fontSize: 16, fontFamily: AppFonts.body, fontWeight: FontWeight.w500, height: 1.25),
+                "Începe o nouă evaluare – 249 lei",
+                style: TextStyle(color: AppColors.grad1, fontSize: 16, fontFamily: AppFonts.body, fontWeight: FontWeight.w500, height: 1.5),
               ),
             ),
           ),

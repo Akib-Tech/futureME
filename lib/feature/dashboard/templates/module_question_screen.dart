@@ -322,17 +322,20 @@ class _TipsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
+          /// A bullet rather than a checkmark: these are prompts to think
+          /// about, not a list of things to tick off. Longer prompts also
+          /// need more room to breathe between them.
           for (final tip in tips)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: 12),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Padding(
-                    padding: EdgeInsets.only(top: 3),
-                    child: Icon(Icons.check, size: 16, color: AppColors.uiHeading),
+                    padding: EdgeInsets.only(top: 6),
+                    child: Icon(Icons.circle, size: 6, color: AppColors.uiHeading),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       tip,

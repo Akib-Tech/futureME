@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:futureme/core/constants/assets.dart';
 import 'package:futureme/core/theme/app_colors.dart';
+import 'package:futureme/feature/dashboard/module_info.dart';
 import 'package:futureme/feature/onboarding/onboarding_screen.dart';
 
-/// Shows the logo with a brief fade/scale-in, then moves on to onboarding
-/// automatically — no tap required.
+/// Shows the logo with a brief fade/scale-in, then moves on automatically —
+/// no tap required. Where it goes depends on [isSignedIn]: a returning user
+/// lands on the dashboard rather than being walked through onboarding,
+/// the age gate and the paywall again.
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  const SplashScreen({super.key, this.isSignedIn = false});
+
+  final bool isSignedIn;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -37,10 +42,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Future<void> _scheduleTransition() async {
     await Future.delayed(_holdDuration);
     if (!mounted) return;
-    // Matches the original tap handler's navigation (plain push, not
-    // pushReplacement) so back-button behavior from onboarding onward is
-    // unchanged — only the trigger (timer vs. tap) is new.
-    Navigator.push(context, MaterialPageRoute(builder: (context) => OnboardingScreen()));
+    // Onboarding keeps the original plain push, so back-button behavior
+    // from there onward is unchanged. The dashboard replaces the splash
+    // instead — there's nothing useful to go back to.
+    if (widget.isSignedIn) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ModuleInfo()));
+    } else {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => OnboardingScreen()));
+    }
   }
 
   @override

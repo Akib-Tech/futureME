@@ -7,16 +7,26 @@ import 'package:futureme/shared/widgets/rounded_card.dart';
 /// Extracted from the identical video-card block duplicated in
 /// video_welcome_screen.dart and function_video.dart.
 class VideoLessonCard extends StatelessWidget {
-  const VideoLessonCard({super.key, required this.title, this.duration = "1 min"});
+  const VideoLessonCard({
+    super.key,
+    required this.title,
+    required this.assetPath,
+    this.duration = "1 min",
+  });
 
   final String title;
+
+  /// Which clip this card plays — every caller passes its own, so the
+  /// onboarding intro doesn't end up playing on every screen.
+  final String assetPath;
+
   final String duration;
 
   @override
   Widget build(BuildContext context) {
     return RoundedCard(
       contents: [
-        const VideoApp(),
+        VideoApp(assetPath: assetPath),
         const SizedBox(height: 10),
         LeftBoldText(content: title),
         SizedBox(

@@ -327,14 +327,17 @@ class ModuleFeedbackSummaryScreen extends StatelessWidget {
                         children: [
                           const Icon(Icons.chat_bubble_outline, size: 24, color: AppColors.grad1),
                           const SizedBox(width: 8),
-                          Text(
-                            chatLabel,
-                            style: const TextStyle(
-                              color: AppColors.grad1 /* ui-action-primary */,
-                              fontSize: 16,
-                              fontFamily: AppFonts.body,
-                              fontWeight: FontWeight.w500,
-                              height: 1.25,
+                          Flexible(
+                            child: Text(
+                              chatLabel,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: AppColors.grad1 /* ui-action-primary */,
+                                fontSize: 16,
+                                fontFamily: AppFonts.body,
+                                fontWeight: FontWeight.w500,
+                                height: 1.25,
+                              ),
                             ),
                           ),
                         ],
@@ -376,10 +379,14 @@ class _SummaryRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              /// The pill sits beside the title, so both need to give way
+              /// rather than run past the card's edge: a long title, a wide
+              /// pill label or a large system text size otherwise pushed the
+              /// pill off-screen.
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
+                  Flexible(
                     child: Text(
                       item.title,
                       style: const TextStyle(
@@ -393,11 +400,11 @@ class _SummaryRow extends StatelessWidget {
                   ),
                   if (item.level != null) ...[
                     const SizedBox(width: 8),
-                    _LevelPill(level: item.level!),
+                    Flexible(child: _LevelPill(level: item.level!)),
                   ],
                   if (item.badgeLabel != null) ...[
                     const SizedBox(width: 8),
-                    _TraitPill(label: item.badgeLabel!),
+                    Flexible(child: _TraitPill(label: item.badgeLabel!)),
                   ],
                 ],
               ),
@@ -428,7 +435,7 @@ class _TraitPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: const Color(0xFFF2ECFF) /* ui-insight-primary-bg */,
         border: Border.all(color: const Color(0xFFCDBAF4) /* ui-insight-primary-border */),
@@ -436,6 +443,8 @@ class _TraitPill extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: const TextStyle(
           color: Color(0xFF3A2384) /* ui-insight-primary-fg */,
           fontSize: 12,
@@ -461,7 +470,7 @@ class _LevelPill extends StatelessWidget {
       SummaryLevel.high => (const Color(0xFFF2ECFF), const Color(0xFFCDBAF4), const Color(0xFF3A2384), "Ridicat"),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: bg,
         border: Border.all(color: border),
@@ -469,6 +478,8 @@ class _LevelPill extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: fg,
           fontSize: 12,

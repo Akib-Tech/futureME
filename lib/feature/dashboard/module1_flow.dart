@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:futureme/core/data/ai_content_repository.dart';
 import 'package:futureme/core/di/injectable_init.dart';
-import 'package:futureme/feature/authentication/pending_signup_data.dart';
 import 'package:futureme/feature/chat/chat_flow.dart';
 import 'package:futureme/feature/dashboard/dashboard_navigation.dart';
 import 'package:futureme/feature/dashboard/module_answers.dart';
@@ -17,15 +16,20 @@ import 'package:futureme/feature/dashboard/module2_flow.dart';
 /// 88:521, 86:485) into a single push-based flow, entered from the
 /// "Începe Modulul 1" button on the dashboard (ModuleInfo).
 ///
-/// The 3 questions and the closing feedback are generated per-user by the
-/// `generateModule1Questions` / `generateInsight` Cloud Functions
-/// ([AiContentRepository]). If either call fails (not deployed, offline,
-/// model error) the flow falls back to the fixed content below, so the
-/// module always works.
+/// The 3 questions are fixed — everyone is asked the same thing, in the
+/// same words, so answers stay comparable and the module reads the same
+/// every time. Only the closing feedback is generated per-user by the
+/// `generateInsight` Cloud Function ([AiContentRepository]); if that call
+/// fails (not deployed, offline, model error) the flow falls back to the
+/// fixed summary below, so the module always works.
 
 const String _defaultHint = "Nu trebuie să scrii perfect. Spune doar ce simți.";
 
-const List<GeneratedQuestion> _fallbackQuestions = [
+/// Recorded closing message for this module, played by the Complete
+/// screen's audio card in place of text-to-speech.
+const String _completeAudio = "assets/audio/module1_complete.m4a";
+
+const List<GeneratedQuestion> _questions = [
   GeneratedQuestion(
     question: "Ce te-a adus la FutureMe chiar acum?",
     subtitle:
@@ -33,14 +37,14 @@ const List<GeneratedQuestion> _fallbackQuestions = [
     placeholder: "Scrie aici orice îți vine în minte...",
   ),
   GeneratedQuestion(
-    question: "Dacă ai avea o baghetă magică, ce ai vrea să se schimbe pentru tine?",
+    question: "Dacă aș avea o baghetă magică și ți-aș putea îndeplini o dorință după această experiență, ce ai vrea să se schimbe pentru tine?",
     subtitle:
         "Imaginează-ți că, după FutureMe, lucrurile sunt puțin mai clare. Ce ai vrea să fie diferit pentru tine?",
     placeholder: "Scrie aici ce ai vrea să se schimbe...",
     hint: "Poate fi ceva mic sau ceva important. Scrie cum îți vine.",
   ),
   GeneratedQuestion(
-    question: "Imaginează-ți parcursul tău profesional ideal",
+    question: "Imaginează-ți că ai ajuns să faci exact ceea ce ți se potrivește",
     subtitle:
         "Nu trebuie să alegi o meserie exactă. Gândește-te la un drum în care te simți bine cu ce faci și cu oamenii din jur.",
     placeholder: "Scrie aici cum ți-ai imagina acest parcurs...",
@@ -48,11 +52,17 @@ const List<GeneratedQuestion> _fallbackQuestions = [
   ),
 ];
 
-const List<String> _fallbackLastQuestionTips = [
-  "ce ai face într-o zi obișnuită",
-  "cu ce fel de oameni ai lucra",
-  "cum te-ai simți în acel rol",
-  "cum ai vrea să te privească cei din jur",
+/// Prompts shown under the last question. They're deliberately full
+/// questions rather than keywords: the answer we're after is a description
+/// of a whole working life, and most people need something concrete to
+/// push against before that comes out.
+const List<String> _lastQuestionTips = [
+  "Ce job ai avea? Ce ai folosi mai mult: gândirea, creativitatea, îndemânarea sau energia fizică? Ai lucra mai mult cu mintea, cu mâinile sau ai prefera o muncă activă, în care să fii în mișcare?",
+  "Cum ar fi colegii tăi? Cum v-ați înțelege? Ați lucra mai mult împreună sau fiecare pe cont propriu?",
+  "Cum s-ar comporta șefii cu tine? Ți-ar spune exact ce ai de făcut sau ți-ar lăsa libertate? Cum ți-ar vorbi?",
+  "Ce ai crede tu despre tine? Cum te-ai vedea ca om? De ce ai fi mândru?",
+  "Cum s-ar simți asta în corpul tău și în atitudinea ta? Cum te-ai simți dimineața când mergi la muncă? Cu ce stare te-ai întoarce acasă?",
+  "Cum te-ar privi și cum ți s-ar adresa familia și cunoscuții? Ce ai vrea să creadă sau să spună despre tine și despre ceea ce faci?",
 ];
 
 const List<SummaryItem> _fallbackFeedbackItems = [
@@ -87,13 +97,6 @@ SummaryLevel? _toSummaryLevel(InsightLevel? level) => switch (level) {
       null => null,
     };
 
-class _Module1Questions {
-  const _Module1Questions(this.items, {required this.isFallback});
-
-  final List<GeneratedQuestion> items;
-  final bool isFallback;
-}
-
 void startModule1(BuildContext context) {
   Navigator.push(
     context,
@@ -111,90 +114,52 @@ void startModule1(BuildContext context) {
         continueLabel: "Începe Modulul 1",
         onContinue: () {
           markModuleStarted('module1');
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const _Module1QuestionsGate()));
+          _openQuestion(context, 0, const []);
         },
       ),
     ),
   );
 }
 
-/// Fetches the per-user questions (or falls back), then replaces itself with
-/// the first question screen.
-class _Module1QuestionsGate extends StatefulWidget {
-  const _Module1QuestionsGate();
-
-  @override
-  State<_Module1QuestionsGate> createState() => _Module1QuestionsGateState();
-}
-
-class _Module1QuestionsGateState extends State<_Module1QuestionsGate> {
-  @override
-  void initState() {
-    super.initState();
-    _resolve();
-  }
-
-  Future<void> _resolve() async {
-    final fetched = await getIt<AiContentRepository>().module1Questions(ageBracket: PendingSignupData.ageBracket);
-    if (!mounted) return;
-    final questions = fetched != null
-        ? _Module1Questions(fetched, isFallback: false)
-        : const _Module1Questions(_fallbackQuestions, isFallback: true);
-    _openQuestion(context, questions, 0, const [], replace: true);
-  }
-
-  @override
-  Widget build(BuildContext context) => const ModuleLoadingScreen(
-        moduleLabel: "Modulul 1",
-        title: "Pregătim întrebările",
-        description: "Adaptăm câteva întrebări pentru tine. Durează câteva secunde.",
-        reminderText: "Nu există răspunsuri greșite.",
-      );
-}
-
 void _openQuestion(
   BuildContext context,
-  _Module1Questions questions,
   int index,
-  List<String> collected, {
-  bool replace = false,
-}) {
-  final route = MaterialPageRoute<void>(
-    builder: (context) {
-      final q = questions.items[index];
-      final isLast = index == questions.items.length - 1;
-      final questionKey = 'q${index + 1}';
-      return ModuleQuestionScreen(
-        questionNumber: index + 1,
-        totalQuestions: questions.items.length,
-        question: q.question,
-        subtitle: q.subtitle,
-        placeholder: q.placeholder,
-        hint: q.hint ?? _defaultHint,
-        continueLabel: isLast ? "Finalizează modulul" : "Continuă",
-        textFieldHeight: isLast ? 205 : 170,
-        buttonPinned: !isLast,
-        tipsTitle: isLast && questions.isFallback ? "Te poți gândi la:" : null,
-        tips: isLast && questions.isFallback ? _fallbackLastQuestionTips : null,
-        onAutosave: (answer) =>
-            saveModuleAnswer('module1', questionKey, type: 'text', value: answer, questionNumber: index + 1),
-        onContinue: (answer) {
-          saveModuleAnswer('module1', questionKey, type: 'text', value: answer, questionNumber: index + 1);
-          final next = [...collected, answer];
-          if (isLast) {
-            _openComplete(context, next);
-          } else {
-            _openQuestion(context, questions, index + 1, next);
-          }
-        },
-      );
-    },
+  List<String> collected,
+) {
+  Navigator.push(
+    context,
+    MaterialPageRoute<void>(
+      builder: (context) {
+        final q = _questions[index];
+        final isLast = index == _questions.length - 1;
+        final questionKey = 'q${index + 1}';
+        return ModuleQuestionScreen(
+          questionNumber: index + 1,
+          totalQuestions: _questions.length,
+          question: q.question,
+          subtitle: q.subtitle,
+          placeholder: q.placeholder,
+          hint: q.hint ?? _defaultHint,
+          continueLabel: isLast ? "Finalizează modulul" : "Continuă",
+          textFieldHeight: isLast ? 205 : 170,
+          buttonPinned: !isLast,
+          tipsTitle: isLast ? "Te poate ajuta să te gândești la:" : null,
+          tips: isLast ? _lastQuestionTips : null,
+          onAutosave: (answer) =>
+              saveModuleAnswer('module1', questionKey, type: 'text', value: answer, questionNumber: index + 1),
+          onContinue: (answer) {
+            saveModuleAnswer('module1', questionKey, type: 'text', value: answer, questionNumber: index + 1);
+            final next = [...collected, answer];
+            if (isLast) {
+              _openComplete(context, next);
+            } else {
+              _openQuestion(context, index + 1, next);
+            }
+          },
+        );
+      },
+    ),
   );
-  if (replace) {
-    Navigator.pushReplacement(context, route);
-  } else {
-    Navigator.push(context, route);
-  }
 }
 
 void _openComplete(BuildContext context, List<String> answers) {
@@ -207,6 +172,7 @@ void _openComplete(BuildContext context, List<String> answers) {
         message:
             "Ai făcut primul pas. Răspunsurile tale au fost salvate și ne ajută să înțelegem mai bine de unde pornești.",
         encouragementNote: "În continuare, îți arătăm un feedback scurt despre ce ai conturat până acum.",
+        audioAssetPath: _completeAudio,
         onContinue: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => _Module1FeedbackGate(answers)),
@@ -280,7 +246,7 @@ Widget _feedbackScreen(BuildContext context, GeneratedInsight? insight) {
     profileDescription: insight?.profileDescription,
     summaryItems: summaryItems,
     nextModuleLabel: "Urmează Modulul 2",
-    nextModuleTitle: "Profil psihologic",
+    nextModuleTitle: "Profil psihologic & stil decizional",
     nextModuleDescription: "Vei explora felul în care gândești, iei decizii și reacționezi în situații diferite.",
     continueLabel: "Continuă cu Modulul 2",
     onContinue: () => startModule2(context),

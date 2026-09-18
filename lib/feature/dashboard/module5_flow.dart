@@ -459,6 +459,7 @@ void _openAudioMessage(BuildContext context) {
             "Ai parcurs o etapă importantă. Înainte să vezi raportul tău, ascultă un mesaj scurt care îți amintește că nu trebuie să ai toate răspunsurile acum. Poți merge mai departe, pas cu pas, în ritmul tău.",
         messageTitle: "Mesaj pentru tine",
         messageSubtitle: "Un moment scurt de încurajare înainte de raportul tău.",
+        videoAssetPath: "assets/videos/final.mp4",
         continueLabel: "Continuă către raport",
         onContinue: () => _openReportLoading(context),
       ),
