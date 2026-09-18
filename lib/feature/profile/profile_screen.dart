@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:futureme/core/auth/auth_service.dart';
 import 'package:futureme/core/data/user_repository.dart';
@@ -8,11 +9,29 @@ import 'package:futureme/feature/authentication/reset_password_screen.dart';
 import 'package:futureme/feature/chat/chat_flow.dart';
 import 'package:futureme/feature/dashboard/dashboard_navigation.dart';
 import 'package:futureme/feature/dashboard/module_progress.dart';
+import 'package:futureme/feature/paywall/pricing_package.dart';
 import 'package:futureme/feature/report/report_screen.dart';
 import 'package:futureme/feature/resources/resources_screen.dart';
+import 'package:futureme/feature/splash/splash_screen.dart';
 import 'package:futureme/shared/widgets/app_bottom_nav_bar.dart';
 import 'package:futureme/shared/widgets/custom_app_bar.dart';
 import 'package:futureme/shared/widgets/page_title.dart';
+
+/// How each stored age bracket reads on screen. Signup records a bracket
+/// rather than a date of birth, so this is as precise as the profile gets —
+/// deliberately, since the app is used by minors.
+const Map<String, String> _ageBracketLabels = {
+  'under14': "Sub 14 ani",
+  '14_15': "14-15 ani",
+  '16_17': "16-17 ani",
+  '18_plus': "18 ani sau peste",
+};
+
+const Map<String, String> _authProviderLabels = {
+  'password': "Email și parolă",
+  'google.com': "Google",
+  'apple.com': "Apple",
+};
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -56,7 +75,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       await getIt<AuthService>().signOut();
       if (!mounted) return;
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      // Clearing the stack on its own left the user staring at nothing:
+      // the app shell doesn't build a new route when auth state changes.
+      // Push the splash in place of everything instead — it routes to
+      // onboarding now that there's no session.
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const SplashScreen()),
+        (route) => false,
+      );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -66,9 +92,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  bool get _subscriptionActive {
+  bool get _hasAccess {
     final status = (_profile?['subscription'] as Map<String, dynamic>?)?['status'] as String?;
     return status != null && status.startsWith('active');
+  }
+
+  String get _authProvider {
+    final raw = _profile?['authProvider'] as String?;
+    return _authProviderLabels[raw] ?? "Email și parolă";
+  }
+
+  /// Only email/password accounts have a password to change.
+  bool get _canChangePassword => (_profile?['authProvider'] as String? ?? 'password') == 'password';
+
+  String? get _ageBracket => _ageBracketLabels[_profile?['ageBracket'] as String?];
+
+  String? get _memberSince {
+    final createdAt = _profile?['createdAt'];
+    if (createdAt is! Timestamp) return null;
+    final date = createdAt.toDate();
+    const months = [
+      "ianuarie", "februarie", "martie", "aprilie", "mai", "iunie",
+      "iulie", "august", "septembrie", "octombrie", "noiembrie", "decembrie",
+    ];
+    return "${date.day} ${months[date.month - 1]} ${date.year}";
   }
 
   @override
@@ -81,6 +128,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             : "Contul tău";
     final email = user?.email ?? (_profile?['email'] as String?) ?? "—";
     final completed = ModuleProgress.completedModules.clamp(0, 5);
+    final ageBracket = _ageBracket;
+    final memberSince = _memberSince;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -98,6 +147,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             CustomAppBar(context),
@@ -113,33 +163,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const PageTitle(content: "Profilul tău", textAlign: TextAlign.left),
                           const SizedBox(height: 24),
                           _IdentityCard(name: name, email: email),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 24),
+                          const _SectionLabel(text: "Datele contului"),
+                          const SizedBox(height: 8),
+                          _DetailsCard(
+                            rows: [
+                              _DetailRow(icon: Icons.person_outline, label: "Nume", value: name),
+                              _DetailRow(icon: Icons.mail_outline, label: "Email", value: email),
+                              if (ageBracket != null)
+                                _DetailRow(icon: Icons.cake_outlined, label: "Vârstă", value: ageBracket),
+                              _DetailRow(icon: Icons.key_outlined, label: "Autentificare", value: _authProvider),
+                              if (memberSince != null)
+                                _DetailRow(icon: Icons.calendar_today_outlined, label: "Cont creat", value: memberSince),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          const _SectionLabel(text: "Parcursul tău"),
+                          const SizedBox(height: 8),
                           _InfoCard(
-                            title: "Parcursul tău",
-                            body: "$completed din 5 module finalizate",
+                            title: "Module finalizate",
+                            body: "$completed din 5",
                             progress: completed / 5,
                           ),
                           const SizedBox(height: 16),
-                          _InfoCard(
-                            title: "Abonament",
-                            body: _subscriptionActive
-                                ? "Plan lunar · activ"
-                                : "Niciun abonament activ",
-                          ),
-                          const SizedBox(height: 24),
-                          _ActionRow(
-                            icon: Icons.lock_outline,
-                            label: "Schimbă parola",
-                            onTap: () => Navigator.push(
+                          _AccessCard(
+                            hasAccess: _hasAccess,
+                            onBuy: () => Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const ResetPasswordScreen()),
+                              MaterialPageRoute(builder: (context) => const PricingPackage()),
                             ),
                           ),
-                          const Divider(color: AppColors.border, height: 1),
-                          _ActionRow(
-                            icon: Icons.logout,
-                            label: _signingOut ? "Se deconectează..." : "Deconectează-te",
-                            onTap: _signingOut ? null : _signOut,
+                          const SizedBox(height: 24),
+                          const _SectionLabel(text: "Setări"),
+                          const SizedBox(height: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(color: AppColors.border),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              children: [
+                                if (_canChangePassword) ...[
+                                  _ActionRow(
+                                    icon: Icons.lock_outline,
+                                    label: "Schimbă parola",
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => const ResetPasswordScreen()),
+                                    ),
+                                  ),
+                                  const Divider(color: AppColors.border, height: 1, indent: 16, endIndent: 16),
+                                ],
+                                _ActionRow(
+                                  icon: Icons.logout,
+                                  label: _signingOut ? "Se deconectează..." : "Deconectează-te",
+                                  onTap: _signingOut ? null : _signOut,
+                                ),
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 24),
                         ],
@@ -148,6 +230,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: AppColors.uiHeading,
+        fontSize: 18,
+        fontFamily: AppFonts.heading,
+        fontWeight: FontWeight.w500,
+        height: 1.2,
       ),
     );
   }
@@ -198,6 +300,130 @@ class _IdentityCard extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailRow {
+  const _DetailRow({required this.icon, required this.label, required this.value});
+
+  final IconData icon;
+  final String label;
+  final String value;
+}
+
+class _DetailsCard extends StatelessWidget {
+  const _DetailsCard({required this.rows});
+
+  final List<_DetailRow> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          for (int i = 0; i < rows.length; i++) ...[
+            if (i > 0) const Divider(color: AppColors.border, height: 1, indent: 16, endIndent: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Icon(rows[i].icon, size: 20, color: AppColors.uiHeadingSmall),
+                  const SizedBox(width: 12),
+                  Text(
+                    rows[i].label,
+                    style: const TextStyle(color: AppColors.uiHeadingSmall, fontSize: 14, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.5),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      rows[i].value,
+                      textAlign: TextAlign.right,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: AppColors.dashboard, fontSize: 14, fontFamily: AppFonts.body, fontWeight: FontWeight.w500, height: 1.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Replaces the old "Abonament" card: there's no recurring plan to report
+/// on, only whether this account has paid for a run.
+class _AccessCard extends StatelessWidget {
+  const _AccessCard({required this.hasAccess, required this.onBuy});
+
+  final bool hasAccess;
+  final VoidCallback onBuy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: hasAccess ? AppColors.border : AppColors.grad1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                hasAccess ? Icons.check_circle_outline : Icons.lock_outline,
+                size: 20,
+                color: hasAccess ? AppColors.statusInfoFg : AppColors.grad1,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                hasAccess ? "Acces activ" : "Acces neactivat",
+                style: const TextStyle(color: AppColors.uiHeading, fontSize: 16, fontFamily: AppFonts.body, fontWeight: FontWeight.w500, height: 1.375),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            hasAccess
+                ? "Ai plătit pentru acest parcurs. Nu există abonament sau reînnoire automată."
+                : "Activează experiența FutureMe printr-o singură plată, fără abonament.",
+            style: const TextStyle(color: AppColors.uiHeadingSmall, fontSize: 14, fontFamily: AppFonts.body, fontWeight: FontWeight.w400, height: 1.5),
+          ),
+          if (!hasAccess) ...[
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: onBuy,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.faint,
+                  border: Border.all(color: AppColors.grad1),
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  "Vezi detalii",
+                  style: TextStyle(color: AppColors.grad1, fontSize: 16, fontFamily: AppFonts.body, fontWeight: FontWeight.w500, height: 1.25),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -263,7 +489,7 @@ class _ActionRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
           children: [
             Icon(icon, size: 20, color: AppColors.dashboard),
